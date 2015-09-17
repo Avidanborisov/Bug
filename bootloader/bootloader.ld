@@ -1,8 +1,19 @@
 OUTPUT_FORMAT("binary")
-ENTRY("mbrStart")
+ENTRY("start")
 
 SECTIONS {
-    .text 0x7c00 : {
-        *(.text)
+    . = 0x7c00;
+
+    .text : {
+        *(.text);
+    }
+
+    .data : {
+        *(.data);
+    }
+
+    /* Boot magic signature */
+    .magic : AT(0x7dfe) {
+        SHORT(0xaa55);
     }
 }

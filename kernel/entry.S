@@ -1,21 +1,24 @@
 .intel_syntax noprefix
 .code16
 
-.data
-pressKey: .string "Press any key to reboot.."
+.global entry
+entry:
+    jmp 0:second
 
-.text
+second:
+    cli
+    mov ax, 0
+    mov ds, ax
+    sti
 
-/**
- * Print null-terminated string at ds:si.
- */
-.global puts
+    call reboot
+
 puts:
     mov ah, 0x0e
 
 putchar:
     lodsb
-    test al, al
+    cmp al, 0
     je end
 
     int 0x10
@@ -24,23 +27,16 @@ putchar:
 end:
     ret
 
-/**
- * Wait for key.
- * ASCII value stored in al.
- */
-.global getchar
 getchar:
     xor ax, ax
     int 0x16
     ret
 
-/**
- * Reboot system.
- */
-.global reboot
 reboot:
     mov si, offset pressKey
     call puts
     call getchar
 
     jmp 0xffff:0
+
+pressKey: .string "Stage 2! Press any key to reboot!"

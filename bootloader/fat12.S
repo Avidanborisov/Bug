@@ -62,7 +62,7 @@ checkEntry:
     cmp bx, word ptr sectorSize
     jne checkEntry
 
-    inc ax
+    inc ax # check next sector
     pop cx # cx is now the number of sectors left in root dir.
     loopnz nextSector # loop till it's zero (check all sectors in the root dir)
 

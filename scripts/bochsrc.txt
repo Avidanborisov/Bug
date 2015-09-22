@@ -1,0 +1,6 @@
+display_library: sdl
+megs: 32
+floppya: 1_44=Bug.img, status=inserted
+boot: a
+log: bochsout.txt
+mouse: enabled=0 

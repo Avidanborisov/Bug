@@ -2,7 +2,7 @@
 .code16
 
 FAT_SEGMENT  = 0x0ee0 # segment to load the FAT table to
-LOAD_SEGMENT = 0x1000 # segment to load the second stage binary to
+LOAD_SEGMENT = 0x600  # segment to load the second stage binary to
 
 .text
 .global start
@@ -36,14 +36,14 @@ extendedBiosParameterBlock:
     reserved:            .byte   0             # Reserved
     signature:           .byte   0x29          # Extended boot sector signature
     volumeSerial:        .int    0             # Volume serial number
-    fileName:            .ascii  "KERNEL     " # Volume label (11 chars max, padded with zeros). Here it's the second stage file name.
+    fileName:            .ascii  "KERNEL  BIN" # Volume label (11 chars max, padded with zeros). Here it's the second stage file name.
     fsType:              .ascii  "FAT12   "    # File system type (8 chars max, padded with zeros)
 
 .global bootDrive, sectorsPerTrack, numHeads, sectorSize, numRootEntries, \
         numFATs, sectorsPerFat, numHiddenSectors, numReservedSectors, sectorsPerFAT
 
 stub:
-    jmp 0:main # enforce CS = 0 because some BIOS' load the MBR to 0x7c0:0 instead of 0:0x7c00
+    jmp 0:main # enforce CS = 0 because some BIOS' load the boot sector to 0x7c0:0 instead of 0:0x7c00
 
 /**
  * The main bootloader code. Loads a second stage binary image to LOAD_SEGMENT

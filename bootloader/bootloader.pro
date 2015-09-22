@@ -3,12 +3,14 @@ CONFIG += console
 CONFIG -= app_bundle
 CONFIG -= qt
 
-QMAKE_LINK = i686-elf-g++
-QMAKE_CC   = i686-elf-gcc
-QMAKE_CXX  = i686-elf-g++
+QMAKE_LINK = x86_64-elf-g++
+QMAKE_CC   = x86_64-elf-gcc
+QMAKE_CXX  = x86_64-elf-g++
+OBJCOPY    = x86_64-elf-objcopy
 
-QMAKE_CFLAGS = -Os -ffreestanding -Wall -Wextra -masm=intel
-QMAKE_LFLAGS = -T $$PWD/bootloader.ld -ffreestanding -nostdlib
+QMAKE_CFLAGS    = -ffreestanding
+QMAKE_LFLAGS    = -T $$PWD/bootloader.ld -ffreestanding -nostdlib
+QMAKE_POST_LINK = $$OBJCOPY -O binary $$OUT_PWD/bootloader $$OUT_PWD/bootloader.bin
 
 SOURCES += \
     boot.S \

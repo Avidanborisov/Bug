@@ -8,6 +8,7 @@ SECTIONS {
     . = 0x6000;
 
     .text : {
+        *(.entry)
         *(.text)
     }
 

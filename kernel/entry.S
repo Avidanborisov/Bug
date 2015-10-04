@@ -5,9 +5,17 @@ CODE_SELECTOR = 0x08
 DATA_SELECTOR = 0x10
 
 /**
+ * The .entry section is the first section in the final kernel binary. It's just
+ * a stub to the entry point that is guaranteed to be the first code in the binary
+ */
+.section .entry
+jmp entry
+
+/**
  * Entry point to the kernel from 16-bit land bootloader far jump.
  * Now switch to protected mode and jump to main kernel code (32-bit)
  */
+.text
 .global entry
 entry:
     # Disable interrupts
@@ -48,6 +56,7 @@ protectedMode:
     mov gs, ax
 
     mov esp, offset entry # the stack grows downwords from the starting address of the kernel
+    call _init
     call kmain
 
 spin: # infinite loop

@@ -10,10 +10,8 @@ OBJCOPY    = i686-elf-objcopy
 
 QMAKE_CFLAGS    = -ffreestanding -Wall -Wextra -masm=intel
 QMAKE_CXXFLAGS  = $$QMAKE_CFLAGS -std=c++11 -fno-exceptions -fno-rtti
-QMAKE_LFLAGS    = -T $$PWD/kernel.ld -ffreestanding -nostdlib
+QMAKE_LFLAGS    = -T $$PWD/kernel.ld -ffreestanding -nostdlib -lgcc
 QMAKE_POST_LINK = $$OBJCOPY -O binary --set-section-flags .bss=alloc,load,contents $$OUT_PWD/kernel $$OUT_PWD/kernel.bin
-
-LIBS += -lgcc
 
 SOURCES += \
     entry.S \
@@ -22,5 +20,19 @@ SOURCES += \
 HEADERS += \
     kernel.hpp
 
+# Global constructors support
+#
+# The following objects shall be included in the linking process to enable global
+# constructors support. See http://wiki.osdev.org/Calling_Global_Constructors for reference
+CRTI     = $$PWD/crti.S
+CRTBEGIN = $$system($$QMAKE_CC $$QMAKE_CFLAGS -print-file-name=crtbegin.o)
+CRTEND   = $$system($$QMAKE_CC $$QMAKE_CFLAGS -print-file-name=crtend.o)
+CRTN     = $$PWD/crtn.S
+
+QMAKE_LFLAGS += $$CRTI $$CRTBEGIN # These objects appear at the start of the link command
+LIBS         += $$CRTEND $$CRTN   # These objects appear at the end of the link command
+
 OTHER_FILES += \
     kernel.ld \
+    crti.S \
+    crtn.S

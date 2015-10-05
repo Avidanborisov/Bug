@@ -6,7 +6,7 @@ DATA_SELECTOR = 0x10
 
 /**
  * The .entry section is the first section in the final kernel binary. It's just
- * a stub to the entry point that is guaranteed to be the first code in the binary
+ * a stub to the entry point that is guaranteed to be the first code in the binary.
  */
 .section .entry
 jmp entry

@@ -15,10 +15,14 @@ QMAKE_POST_LINK = $$OBJCOPY -O binary --set-section-flags .bss=alloc,load,conten
 
 SOURCES += \
     entry.S \
-    kernel.cpp
+    x86.S \
+    kernel.cpp \
+    framebuffer.cpp
 
 HEADERS += \
-    kernel.hpp
+    kernel.hpp \
+    framebuffer.hpp \
+    x86.hpp
 
 # Global constructors support
 #
@@ -35,4 +39,4 @@ LIBS         += $$CRTEND $$CRTN   # These objects appear at the end of the link 
 OTHER_FILES += \
     kernel.ld \
     crti.S \
-    crtn.S
+    crtn.S \

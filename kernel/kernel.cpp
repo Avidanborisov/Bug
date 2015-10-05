@@ -1,13 +1,22 @@
 #include <stdint.h>
 #include "kernel.hpp"
+#include "framebuffer.hpp"
 
 void Kernel::main() {
-    using Monitor = uint16_t[25][80];
-    auto& monitor = *(Monitor *)0xB8000;
+    Framebuffer::clear();
 
-    for (auto& row : monitor)
-        for (auto& cell : row)
-            cell = ' ';
+    const auto start = (int)Framebuffer::Color::BLACK;
+    const auto end = (int)Framebuffer::Color::WHITE;
 
-    monitor[0][0] = 'A' | 0xf00;
+    // nicely print all letters with all colors :)
+    int letter = 0;
+    for (int fg = end; fg >= start; --fg) {
+        for (int bg = start; bg <= end; ++bg) {
+            if (fg == bg)
+                continue;
+
+            Framebuffer::putchar(letter + 'A', (Framebuffer::Color)fg, (Framebuffer::Color)bg);
+            letter = (letter + 1) % 26;
+        }
+    }
 }

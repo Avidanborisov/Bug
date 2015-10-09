@@ -9,7 +9,7 @@ QMAKE_CXX  = i686-elf-g++
 OBJCOPY    = i686-elf-objcopy
 
 QMAKE_CFLAGS    = -ffreestanding -Wall -Wextra -masm=intel
-QMAKE_CXXFLAGS  = $$QMAKE_CFLAGS -std=c++11 -fno-exceptions -fno-rtti
+QMAKE_CXXFLAGS  = $$QMAKE_CFLAGS -std=c++14 -fno-exceptions -fno-rtti
 QMAKE_LFLAGS    = -T $$PWD/kernel.ld -ffreestanding -nostdlib -lgcc
 QMAKE_POST_LINK = $$OBJCOPY -O binary --set-section-flags .bss=alloc,load,contents $$OUT_PWD/kernel $$OUT_PWD/kernel.bin
 
@@ -17,12 +17,14 @@ SOURCES += \
     entry.S \
     x86.S \
     kernel.cpp \
-    framebuffer.cpp
+    framebuffer.cpp \
+    console.cpp
 
 HEADERS += \
     kernel.hpp \
     framebuffer.hpp \
-    x86.hpp
+    x86.hpp \
+    console.hpp
 
 # Global constructors support
 #

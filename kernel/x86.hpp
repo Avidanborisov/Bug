@@ -1,6 +1,8 @@
 #ifndef X86_HPP
 #define X86_HPP
 
+#include <stdint.h>
+
 class x86 {
 public:
     static void out(uint16_t, uint8_t data) asm("x86_out");

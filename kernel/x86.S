@@ -19,6 +19,12 @@ x86_inw:
     in ax, dx
     ret
 
+.global x86_lgdt
+x86_lgdt:
+    mov eax, [esp + 4] # eax = address of gdt pointer
+    lgdt [eax]         # load gdt using the gdt pointer eax points at
+    ret
+
 .global x86_cs
 x86_cs:
 

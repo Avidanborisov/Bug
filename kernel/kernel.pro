@@ -18,13 +18,15 @@ SOURCES += \
     x86.S \
     kernel.cpp \
     framebuffer.cpp \
-    console.cpp
+    console.cpp \
+    gdt.cpp
 
 HEADERS += \
     kernel.hpp \
     framebuffer.hpp \
     x86.hpp \
-    console.hpp
+    console.hpp \
+    gdt.hpp
 
 # Global constructors support
 #

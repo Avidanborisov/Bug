@@ -67,7 +67,7 @@ spin: # infinite loop
 
 /**
  * The bootstrap GDT (global descriptor table) used to enter protected mode.
- * The layout of this table will be described in gdt.hpp
+ * The layout of this table is described in gdt.hpp
  */
 gdt:
     # null descriptor

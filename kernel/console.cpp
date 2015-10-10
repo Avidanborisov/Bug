@@ -2,6 +2,7 @@
 
 void Console::init() {
     Framebuffer::clear();
+    print("                            Welcome to Bug OS!\n", Console::Color::CYAN);
 }
 
 void Console::print(char c, Console::Color fg, Console::Color bg) {

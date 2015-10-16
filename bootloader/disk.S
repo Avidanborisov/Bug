@@ -44,7 +44,7 @@ lba2chs:
 
 /**
  * Read sector with LBA specified by ax into buffer at es:bx.
- * ax has the same value after this function. cx and bx are modified.
+ * ax has the same value after this function. cx is modified.
  */
 .global readSector
 readSector:
@@ -85,14 +85,25 @@ success:
 /**
  * Read n (count specified by cx) sectors with LBA specified by ax into buffer at es:bx.
  * ax, cx and bx are modified by this function.
+ *
+ * The function increments es:bx by the number of bytes read.
  */
 .global readSectors
 readSectors:
     push cx
     call readSector
-    pop cx
     inc ax
     add bx, sectorSize
+    jc increaseSegment
+    jmp nextSector
+
+increaseSegment: # if bx overflows, increase es so that es:bx points to the next memory address
+    mov cx, es
+    add ch, 0x10 # es += 0x1000
+    mov es, cx
+
+nextSector:
+    pop cx
     loopnz readSectors
     ret
 

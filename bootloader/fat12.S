@@ -148,8 +148,8 @@ nextCluster:
 
     mov ax, cx
     call cluster2lba
-    call readSector
-    add bx, sectorSize
+    movzx cx, byte ptr sectorsPerCluster
+    call readSectors
 
     pop cx
     pop ax

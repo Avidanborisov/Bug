@@ -2,7 +2,7 @@
 .code16
 
 .data
-pressKey: .string "Press any key to reboot.."
+pressKey: .string "Press a key.."
 
 .text
 

@@ -1,8 +1,11 @@
 .intel_syntax noprefix
 .code16
 
-FAT_SEGMENT  = 0x0ee0 # segment to load the FAT table to
-LOAD_SEGMENT = 0x600  # segment to load the second stage binary to
+FAT_SEGMENT  = 0x07e0 # = load address + sectorSize = 0x7xc00 + 512
+                      # segment to load the FAT table to.
+
+LOAD_SEGMENT = 0x0900 # = FAT_SEGMENT + sectorsPerFAT * sectorSize = 0x7e00 + 9*512
+                      # segment to load the second stage binary to.
 
 .text
 .global start
@@ -40,7 +43,8 @@ extendedBiosParameterBlock:
     fsType:              .ascii  "FAT12   "    # File system type (8 chars max, padded with zeros)
 
 .global bootDrive, sectorsPerTrack, numHeads, sectorSize, numRootEntries, \
-        numFATs, sectorsPerFat, numHiddenSectors, numReservedSectors, sectorsPerFAT
+        numFATs, sectorsPerFat, numHiddenSectors, numReservedSectors, \
+        sectorsPerFAT, sectorsPerCluster
 
 stub:
     jmp 0:main # enforce CS = 0 because some BIOS' load the boot sector to 0x7c0:0 instead of 0:0x7c00
@@ -57,7 +61,7 @@ main:
     xor ax, ax
     mov ds, ax
     mov ss, ax
-    mov sp, 0x7c00 # Stack grows downwards from 0x7c00 (load address)
+    mov sp, offset start # Stack grows downwards from load address.
     sti
 
     # Reset disk system

@@ -1,12 +1,13 @@
 #include <stdint.h>
 #include "kernel.hpp"
 #include "console.hpp"
-#include "x86.hpp"
 #include "gdt.hpp"
+#include "interrupts.hpp"
 
 void Kernel::main() {
     Console::init();
     GDT::init();
+    Interrupts::init();
 
-    Console::printf("GDT loaded (cs=0x%x ds=0x%x)\n", x86::regs::cs(), x86::regs::ds());
+    asm volatile("int 9");
 }

@@ -19,14 +19,26 @@ SOURCES += \
     kernel.cpp \
     framebuffer.cpp \
     console.cpp \
-    gdt.cpp
+    gdt.cpp \
+    idt.cpp \
+    context.S \
+    isr.cpp \
+    isrs.S \
+    irq.cpp \
+    irqs.S \
+    interrupts.cpp
 
 HEADERS += \
     kernel.hpp \
     framebuffer.hpp \
     x86.hpp \
     console.hpp \
-    gdt.hpp
+    gdt.hpp \
+    idt.hpp \
+    context.hpp \
+    isr.hpp \
+    irq.hpp \
+    interrupts.hpp
 
 # Global constructors support
 #

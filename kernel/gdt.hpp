@@ -7,10 +7,10 @@ class GDT {
 public:
     static void init();
 
-    static const uint32_t CODE_SELECTOR;
-    static const uint32_t DATA_SELECTOR;
-    static const uint32_t USER_CODE_SELECTOR;
-    static const uint32_t USER_DATA_SELECTOR;
+    static const uint16_t CODE_SELECTOR      asm("GDT_CODE_SELECTOR");
+    static const uint16_t DATA_SELECTOR      asm("GDT_DATA_SELECTOR");
+    static const uint16_t USER_CODE_SELECTOR asm("GDT_USER_CODE_SELECTOR");
+    static const uint16_t USER_DATA_SELECTOR asm("GDT_USER_DATA_SELECTOR");
 
 private:
     // GDT Entry:

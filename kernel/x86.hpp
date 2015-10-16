@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "gdt.hpp"
+#include "idt.hpp"
 
 class x86 {
 public:
@@ -11,6 +12,10 @@ public:
     static uint16_t inw(uint16_t port)           asm("x86_inw");
 
     static void lgdt(const GDT::Pointer& ptr)    asm("x86_lgdt");
+    static void lidt(const IDT::Pointer& ptr)    asm("x86_lidt");
+
+    static void sti()                            asm("x86_sti");
+    static void cli()                            asm("x86_cli");
 
     struct regs {
         static struct {

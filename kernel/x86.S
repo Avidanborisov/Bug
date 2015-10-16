@@ -25,6 +25,22 @@ x86_lgdt:
     lgdt [eax]         # load gdt using the gdt pointer eax points at
     ret
 
+.global x86_lidt
+x86_lidt:
+    mov eax, [esp + 4] # eax = address of idt pointer
+    lidt [eax]         # load idt using the idt pointer eax points at
+    ret
+
+.global x86_sti
+x86_sti:
+    sti
+    ret
+
+.global x86_cli
+x86_cli:
+    cli
+    ret
+
 .global x86_cs
 x86_cs:
 

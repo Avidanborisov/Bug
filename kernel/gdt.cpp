@@ -11,10 +11,10 @@ GDT::Entry GDT::descriptors[] = {
     { 0, 0x000fffff, 3, false }, // user data segment
 };
 
-const uint32_t GDT::CODE_SELECTOR      = 1 * sizeof(GDT::Entry);
-const uint32_t GDT::DATA_SELECTOR      = 2 * sizeof(GDT::Entry);
-const uint32_t GDT::USER_CODE_SELECTOR = 3 * sizeof(GDT::Entry);
-const uint32_t GDT::USER_DATA_SELECTOR = 4 * sizeof(GDT::Entry);
+const uint16_t GDT::CODE_SELECTOR      = 1 * sizeof(GDT::Entry);
+const uint16_t GDT::DATA_SELECTOR      = 2 * sizeof(GDT::Entry);
+const uint16_t GDT::USER_CODE_SELECTOR = 3 * sizeof(GDT::Entry);
+const uint16_t GDT::USER_DATA_SELECTOR = 4 * sizeof(GDT::Entry);
 
 void GDT::init() {
     Pointer ptr(descriptors, sizeof descriptors - 1);

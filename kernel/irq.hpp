@@ -25,6 +25,8 @@ private:
         void sendData(uint8_t data) const;
         void sendEOI() const;
 
+        uint8_t readISR() const;
+
     private:
         uint16_t commandPort;
         uint16_t dataPort;

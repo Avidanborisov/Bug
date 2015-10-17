@@ -26,7 +26,8 @@ SOURCES += \
     isrs.S \
     irq.cpp \
     irqs.S \
-    interrupts.cpp
+    interrupts.cpp \
+    timer.cpp
 
 HEADERS += \
     kernel.hpp \
@@ -38,7 +39,8 @@ HEADERS += \
     context.hpp \
     isr.hpp \
     irq.hpp \
-    interrupts.hpp
+    interrupts.hpp \
+    timer.hpp
 
 # Global constructors support
 #

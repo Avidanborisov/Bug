@@ -79,6 +79,10 @@ void IRQ::commonHandler(const Context::Registers& regs) {
     if (regs.intNum >= 8)
         slave.sendEOI();
 
+    // Handle spurious IRQ7
+    if (regs.intNum == 7 && !(master.readISR() & 0x80))
+        return;
+
     // Send EOI to the master PIC
     master.sendEOI();
 
@@ -101,4 +105,9 @@ void IRQ::PIC::sendData(uint8_t data) const {
 
 void IRQ::PIC::sendEOI() const {
     sendCommand(0x20);
+}
+
+uint8_t IRQ::PIC::readISR() const {
+    sendCommand(0x0b);
+    return x86::inb(commandPort);
 }

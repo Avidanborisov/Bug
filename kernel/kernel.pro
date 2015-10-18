@@ -14,7 +14,9 @@ QMAKE_LFLAGS    = -T $$PWD/kernel.ld -ffreestanding -nostdlib -lgcc
 QMAKE_POST_LINK = $$OBJCOPY -O binary --set-section-flags .bss=alloc,load,contents $$OUT_PWD/kernel $$OUT_PWD/kernel.bin
 
 SOURCES += \
-    entry.S \
+    boot/entry.S \
+    boot/bios.S \
+    boot/e820.cpp \
     x86.S \
     kernel.cpp \
     framebuffer.cpp \
@@ -27,9 +29,11 @@ SOURCES += \
     irq.cpp \
     irqs.S \
     interrupts.cpp \
-    timer.cpp
+    timer.cpp \
 
 HEADERS += \
+    boot/bios.hpp \
+    boot/e820.hpp \
     kernel.hpp \
     framebuffer.hpp \
     x86.hpp \
@@ -40,7 +44,7 @@ HEADERS += \
     isr.hpp \
     irq.hpp \
     interrupts.hpp \
-    timer.hpp
+    timer.hpp \
 
 # Global constructors support
 #

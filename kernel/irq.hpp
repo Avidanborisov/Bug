@@ -14,7 +14,7 @@ public:
     static constexpr auto NUM_HANDLERS = 16;
 
 private:
-    static void commonHandler(const Context::Registers& regs) asm("irq_common_handler");
+    static void commonHandler(const Context::Registers& regs) asm("IRQ_commonHandler");
     static Handler* handlers[];
 
     class PIC {

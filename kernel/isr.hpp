@@ -13,7 +13,7 @@ public:
     static constexpr auto NUM_HANDLERS = 32;
 
 private:
-    static void commonHandler(const Context::Registers& regs) asm("isr_common_handler");
+    static void commonHandler(const Context::Registers& regs) asm("ISR_commonHandler");
     static Handler* handlers[];
 };
 

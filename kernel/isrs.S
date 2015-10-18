@@ -1,6 +1,6 @@
 .intel_syntax noprefix
 
-.macro create_isr num
+.macro isr num
 .global isr\num
 isr\num:
     cli
@@ -8,52 +8,52 @@ isr\num:
     jmp commonTarget
 .endm
 
-.macro create_isr_no_error num
+.macro isrNoError num
 .global isr\num
 isr\num:
     cli
-    push 0 // dummy error code
+    push 0 # dummy error code
     push \num
     jmp commonTarget
 .endm
 
-create_isr_no_error  0
-create_isr_no_error  1
-create_isr_no_error  2
-create_isr_no_error  3
-create_isr_no_error  4
-create_isr_no_error  5
-create_isr_no_error  6
-create_isr_no_error  7
-create_isr           8
-create_isr_no_error  9
-create_isr          10
-create_isr          11
-create_isr          12
-create_isr          13
-create_isr          14
-create_isr          15
-create_isr_no_error 16
-create_isr_no_error 17
-create_isr_no_error 18
-create_isr_no_error 19
-create_isr_no_error 20
-create_isr_no_error 21
-create_isr_no_error 22
-create_isr_no_error 23
-create_isr_no_error 24
-create_isr_no_error 25
-create_isr_no_error 26
-create_isr_no_error 27
-create_isr_no_error 28
-create_isr_no_error 29
-create_isr_no_error 30
-create_isr_no_error 31
+isrNoError  0
+isrNoError  1
+isrNoError  2
+isrNoError  3
+isrNoError  4
+isrNoError  5
+isrNoError  6
+isrNoError  7
+isr         8
+isrNoError  9
+isr        10
+isr        11
+isr        12
+isr        13
+isr        14
+isr        15
+isrNoError 16
+isrNoError 17
+isrNoError 18
+isrNoError 19
+isrNoError 20
+isrNoError 21
+isrNoError 22
+isrNoError 23
+isrNoError 24
+isrNoError 25
+isrNoError 26
+isrNoError 27
+isrNoError 28
+isrNoError 29
+isrNoError 30
+isrNoError 31
 
 commonTarget:
-    call context_save
-    call isr_common_handler
-    call context_restore
+    call Context_save
+    call ISR_commonHandler
+    call Context_restore
 
     add esp, 8 # two arguments were pushed on the stack before calling this function
     iret # pops cs, eip, eflags, ss, and esp and return from interrupt

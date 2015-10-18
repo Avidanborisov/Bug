@@ -12,8 +12,8 @@ public:
         uint32_t eip, cs, eflags, esp, ss;                   // pushed by the processor when doing an interrupt
     };
 
-    static void save()    asm("context_save");
-    static void restore() asm("context_restore");
+    static void save()    asm("Context_save");
+    static void restore() asm("Context_restore");
 };
 
 #endif // CONTEXT_HPP

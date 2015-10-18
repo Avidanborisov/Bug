@@ -2,8 +2,8 @@
 
 retAddr: .int 0
 
-.global context_save
-context_save:
+.global Context_save
+Context_save:
     pop dword ptr retAddr
 
     pusha # push edi, esi, ebp, esp, ebx, edx, ecx, eax
@@ -21,8 +21,8 @@ context_save:
 
     jmp dword ptr retAddr
 
-.global context_restore
-context_restore:
+.global Context_restore
+Context_restore:
     pop dword ptr retAddr
 
     add esp, 4 # pop Context::Registers pointer away

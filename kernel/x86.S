@@ -44,10 +44,10 @@ x86_cli:
 .global x86_interrupt
 x86_interrupt:
     mov eax, [esp + 4]
-    mov int_num, al
+    mov intNum, al
 
     .byte 0xcd # INT opcode
-int_num:
+intNum:
     .byte 0
 
     ret

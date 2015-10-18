@@ -1,6 +1,6 @@
 .intel_syntax noprefix
 
-.macro create_irq num
+.macro irq num
 .global irq\num
 irq\num:
     cli
@@ -9,27 +9,27 @@ irq\num:
     jmp commonTarget
 .endm
 
-create_irq  0
-create_irq  1
-create_irq  2
-create_irq  3
-create_irq  4
-create_irq  5
-create_irq  6
-create_irq  7
-create_irq  8
-create_irq  9
-create_irq 10
-create_irq 11
-create_irq 12
-create_irq 13
-create_irq 14
-create_irq 15
+irq  0
+irq  1
+irq  2
+irq  3
+irq  4
+irq  5
+irq  6
+irq  7
+irq  8
+irq  9
+irq 10
+irq 11
+irq 12
+irq 13
+irq 14
+irq 15
 
 commonTarget:
-    call context_save
-    call irq_common_handler
-    call context_restore
+    call Context_save
+    call IRQ_commonHandler
+    call Context_restore
 
     add esp, 8 # two arguments were pushed on the stack before calling this function
     iret # pops cs, eip, eflags, ss, and esp and return from interrupt

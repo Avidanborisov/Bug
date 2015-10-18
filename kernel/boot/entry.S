@@ -18,6 +18,10 @@ jmp entry
 .text
 .global entry
 entry:
+    # Bootloader changed es to the kernel load address before the far jump. Change it back.
+    mov ax, 0
+    mov es, ax
+
     # Disable interrupts
     cli
 
@@ -30,6 +34,9 @@ entry:
     out 0x92, al
 
 a20enabled:
+    # Get memory map using E820
+    data32 call detectMemory
+
     # Load bootstrap GDT, required in order to switch to protected mode
     lgdt gdtSelector
 

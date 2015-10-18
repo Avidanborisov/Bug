@@ -41,6 +41,17 @@ x86_cli:
     cli
     ret
 
+.global x86_interrupt
+x86_interrupt:
+    mov eax, [esp + 4]
+    mov int_num, al
+
+    .byte 0xcd # INT opcode
+int_num:
+    .byte 0
+
+    ret
+
 .global x86_cs
 x86_cs:
 

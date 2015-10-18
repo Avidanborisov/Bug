@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include "kernel.hpp"
 #include "console.hpp"
 #include "gdt.hpp"

@@ -30,6 +30,7 @@ SOURCES += \
     irqs.S \
     interrupts.cpp \
     timer.cpp \
+    memorymap.cpp
 
 HEADERS += \
     boot/bios.hpp \
@@ -45,6 +46,9 @@ HEADERS += \
     irq.hpp \
     interrupts.hpp \
     timer.hpp \
+    sort.hpp \
+    memorymap.hpp \
+    array.hpp
 
 # Global constructors support
 #

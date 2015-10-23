@@ -3,8 +3,9 @@
 #include "gdt.hpp"
 #include "interrupts.hpp"
 #include "timer.hpp"
-#include "isr.hpp"
-#include "e820.hpp"
+#include "memorymap.hpp"
+#include "boot/e820.hpp"
+#include "array.hpp"
 
 void Kernel::main() {
     Timer::disable();
@@ -13,8 +14,5 @@ void Kernel::main() {
     GDT::init();
     Interrupts::init();
 
-    for (int i = 0; i < E820::Entry::count; ++i) {
-        auto& e = E820::entries[i];
-        Console::printf("%x%.08x %x%.08x %x %x\n", e.baseHigh, e.baseLow, e.lengthHigh, e.lengthLow, e.acpi, e.type);
-    }
+    E820::sanitizeMap();
 }

@@ -2,32 +2,34 @@
 #define E820_HPP
 
 #include <stdint.h>
+#include <array.hpp>
 
 class E820 {
 public:
     static constexpr auto MAX_ENTRIES = 20;
 
-    static struct [[gnu::packed]] Entry {
-        uint32_t baseLow;
-        uint32_t baseHigh;
-        uint32_t lengthLow;
-        uint32_t lengthHigh;
+    struct [[gnu::packed]] Entry {
+        uint64_t base;
+        uint64_t length;
         uint16_t type;
         uint16_t acpi;
-
-        static uint16_t count;
 
         enum Type {
             AVAILABLE = 1,
             RESERVED  = 2,
         };
-    } entries[];
+    };
 
+    static Array<Entry, MAX_ENTRIES> map;
     static_assert(sizeof(Entry) == 20, "E820 entry is 20 bytes");
 
     static void detectMemory() asm("detectMemory"); // CALL ONLY FROM REAL MODE!
+    static void sanitizeMap();
 
 private:
+    static Entry entries[];
+    static uint16_t count;
+
     static constexpr auto SMAP_SIGNATURE = 0x534d4150; // 'SMAP'
 };
 

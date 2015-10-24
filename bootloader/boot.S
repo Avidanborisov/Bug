@@ -53,10 +53,11 @@ stub:
  * The main bootloader code. Loads a second stage binary image to LOAD_SEGMENT
  * and jumps to it.
  */
+
 main:
     cld
-    mov bootDrive, dl # Save the drive BIOS booted from
 
+    # Reset segments
     cli
     xor ax, ax
     mov ds, ax
@@ -64,8 +65,22 @@ main:
     mov sp, offset start # Stack grows downwards from load address.
     sti
 
+    # Get correct disk geometry
+    push dx
+    push es
+    mov ah, 8
+    int 0x13
+    and cx, 0x3f
+    mov sectorsPerTrack, cx
+    mov al, cl
+    movzx dx, dh
+    add dx, 1
+    mov numHeads, dx
+    pop es
+    pop dx
+
     # Reset disk system
-    mov dl, bootDrive
+    mov byte ptr bootDrive, dl # Save the drive BIOS booted from
     call resetDrive
 
     # Calculate FAT12 root directory info

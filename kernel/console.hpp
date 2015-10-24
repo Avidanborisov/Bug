@@ -25,8 +25,6 @@ public:
     static void printf(const char* fmt, ...);
     static void printf(Color fg, const char* fmt, ...);
     static void printf(Color fg, Color bg, const char* fmt, ...);
-
-private:
     static void vprintf(Color fg, Color bg, const char* fmt, va_list ap);
 };
 

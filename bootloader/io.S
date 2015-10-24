@@ -2,7 +2,7 @@
 .code16
 
 .data
-pressKey: .string "Press a key.."
+pressKey: .string "Press any key.."
 
 .text
 

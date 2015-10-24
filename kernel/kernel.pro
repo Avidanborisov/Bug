@@ -48,7 +48,8 @@ HEADERS += \
     timer.hpp \
     sort.hpp \
     memorymap.hpp \
-    array.hpp
+    array.hpp \
+    assert.hpp
 
 # Global constructors support
 #

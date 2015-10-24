@@ -14,5 +14,15 @@ void Kernel::main() {
     GDT::init();
     Interrupts::init();
 
-    E820::sanitizeMap();
+    MemoryMap::init();
+}
+
+void Kernel::panic(const char* msg, ...) {
+    va_list ap;
+    va_start(ap, msg);
+
+    Console::print("\n*** KERNEL PANIC ***\n", Console::Color::RED);
+    Console::vprintf(Console::Color::CYAN, Console::Color::BLACK, msg, ap);
+    Console::print('\n');
+    while (true) { }
 }

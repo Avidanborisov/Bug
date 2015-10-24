@@ -5,7 +5,7 @@
 rootSectors: .word 0 # number of sectors in the root directory
 rootStart:   .word 0 # first root entry sector
 
-notFound:    .string "File not found!\r\n"
+notFound:    .string "NF!\r\n"
 
 BYTES_PER_ENTRY = 32    # size of FAT12 file entry
 CLUSTER_OFFSET  = 26    # offset of the cluster in the file entry structor

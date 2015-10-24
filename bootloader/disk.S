@@ -5,7 +5,7 @@
 sector:    .byte 0
 track:     .byte 0
 head:      .byte 0
-diskError: .string "Disk Error!\r\n"
+diskError: .string "DE!\r\n"
 
 MAX_READ_TRIES = 4
 
@@ -111,6 +111,6 @@ nextSector:
  * Disk failure - display message and reboot
  */
 diskFailure:
-    mov si, offset diskError
-    call puts
+/*    mov si, offset diskError
+    call puts*/
     call reboot

@@ -15,13 +15,20 @@ public:
         uint16_t acpi;
 
         enum Type {
-            AVAILABLE = 1,
-            RESERVED  = 2,
+            AVAILABLE        = 1,
+            RESERVED         = 2,
+            ACPI_RECLAIMABLE = 3,
+            ACPI_NVS         = 4,
+            BAD_MEMORY       = 5,
         };
+
+        constexpr bool isAvailable() const {
+            return type == AVAILABLE;
+        }
     };
 
-    static Array<Entry, MAX_ENTRIES> map;
     static_assert(sizeof(Entry) == 20, "E820 entry is 20 bytes");
+    static Array<Entry, MAX_ENTRIES> map;
 
     static void detectMemory() asm("detectMemory"); // CALL ONLY FROM REAL MODE!
     static void sanitizeMap();

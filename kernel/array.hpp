@@ -2,23 +2,29 @@
 #define ARRAY_HPP
 
 #include <stddef.h>
+#include "assert.hpp"
 
 template<class T, size_t N>
 class Array {
 public:
     T& operator[](size_t pos) {
+        assert(pos < size_);
         return data_[pos];
     }
 
     const T& operator[](size_t pos) const {
+        assert(pos < size_);
         return data_[pos];
     }
 
     void insert(const T& val) {
+        assert(size_ < N);
         data_[size_++] = val;
     }
 
     void remove(size_t pos) {
+        assert(size_ != 0 && pos < size_);
+
         for (size_t i = pos; i < size_ - 1; ++i)
             data_[i] = data_[i + 1];
 
@@ -26,6 +32,7 @@ public:
     }
 
     void pop() {
+        assert(size_ != 0);
         --size_;
     }
 
@@ -58,18 +65,22 @@ public:
     }
 
     T& first() {
+        assert(size_ != 0);
         return data_[0];
     }
 
     const T& first() const {
+        assert(size_ != 0);
         return data_[0];
     }
 
     T& last() {
+        assert(size_ != 0);
         return data_[size_ - 1];
     }
 
     const T& last() const {
+        assert(size_ != 0);
         return data_[size_ - 1];
     }
 

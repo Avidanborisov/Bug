@@ -15,7 +15,7 @@ public:
         bool available;
 
         Entry() = default;
-        Entry(uint64_t base, uint64_t length, bool available);
+        Entry(uint64_t start, uint64_t end, bool available); // Entry for address range [start, end)
         Entry(const E820::Entry& e);
     };
 

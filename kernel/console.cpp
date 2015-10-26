@@ -1,4 +1,5 @@
 #include "console.hpp"
+#include "assert.hpp"
 
 void Console::init() {
     Framebuffer::clear();
@@ -19,12 +20,8 @@ void Console::print(bool b, Console::Color fg, Console::Color bg) {
 }
 
 void Console::print(uint32_t num, int base, int minWidth, bool zeroPad, Color fg, Color bg) {
-    static const char* CHARMAP = "0123456789abcdefghijklmnopqrstuvwxyz";
-
-    if (base < 2 || base > 36) {
-        print("Error: invalid base for Console::print()", Color::RED);
-        return;
-    }
+    static const char* CHARMAP = "0123456789abcdefghijklmnopqrstuvwxyz";    
+    assert(base >= 2 && base <= 36);
 
     int i = 0;
     int digits[32]; // max 32 digits for binary base
@@ -78,6 +75,10 @@ void Console::printf(Color fg, Color bg, const char* fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     vprintf(fg, bg, fmt, ap);
+}
+
+void Console::vprintf(Console::Color fg, const char* fmt, va_list ap) {
+    vprintf(fg, Color::BLACK, fmt, ap);
 }
 
 void Console::vprintf(Console::Color fg, Console::Color bg, const char* fmt, va_list ap) {

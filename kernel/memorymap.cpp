@@ -4,8 +4,8 @@
 
 Array<MemoryMap::Entry, E820::MAX_ENTRIES * 2> MemoryMap::entries;
 
-MemoryMap::Entry::Entry(uint64_t base, uint64_t length, bool available) :
-    base(base), length(length), available(available) { }
+MemoryMap::Entry::Entry(uint64_t start, uint64_t end, bool available) :
+    base(start), length(end - start), available(available) { }
 
 MemoryMap::Entry::Entry(const E820::Entry& e) :
     base(e.base), length(e.length), available(e.isAvailable()) { }
@@ -21,19 +21,14 @@ void MemoryMap::init() {
         const auto& entry = E820::map[i];
         const auto& prevEntry = entries.last();
 
-        if (entry.base != prevEntry.base + prevEntry.length) {
-            Entry unlisted;
-            unlisted.base = prevEntry.base + prevEntry.length;
-            unlisted.length = entry.base - unlisted.base;
-            unlisted.available = false;
-
-            entries.insert(unlisted);
-        }
+        // If there's an unlisted region, insert it as non-available
+        if (entry.base != prevEntry.base + prevEntry.length)
+            entries.insert({ prevEntry.base + prevEntry.length, entry.base, false });
 
         // Discard entries above 4GiB
         if (entry.base + entry.length >= MEMORY_END) {
             if (entry.base != MEMORY_END)
-                entries.insert({ entry.base, MEMORY_END - entry.base, entry.isAvailable() });
+                entries.insert({ entry.base, MEMORY_END, entry.isAvailable() });
 
             break;
         }
@@ -43,13 +38,8 @@ void MemoryMap::init() {
 
 
     // If E820 didn't cover entire 4GiB memory space, complete the map
-    if (entries.last().base + entries.last().length != 0) {
-        entries.insert({
-            entries.last().base + entries.last().length,
-            MEMORY_END - entries.last().base - entries.last().length,
-            false
-        });
-    }
+    if (entries.last().base + entries.last().length != 0)
+        entries.insert({ entries.last().base + entries.last().length, MEMORY_END, false });
 
     // merge adjacent ranges of same type
     for (size_t i = 1; i < entries.size(); ++i) {

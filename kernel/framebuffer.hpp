@@ -20,7 +20,7 @@ public:
         LIGHT_CYAN    = 11,
         LIGHT_RED     = 12,
         LIGHT_MAGENTA = 13,
-        LIGHT_BROWN   = 14,
+        YELLOW        = 14,
         WHITE         = 15,
     };
 

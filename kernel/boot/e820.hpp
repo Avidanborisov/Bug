@@ -2,7 +2,7 @@
 #define E820_HPP
 
 #include <stdint.h>
-#include <array.hpp>
+#include <containers/array.hpp>
 
 class E820 {
 public:

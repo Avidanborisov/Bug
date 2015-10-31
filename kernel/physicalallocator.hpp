@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "paging.hpp"
-#include "bitset.hpp"
+#include "containers/bitset.hpp"
 
 class PhysicalAllocator {
 public:

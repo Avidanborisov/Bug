@@ -31,9 +31,9 @@ SOURCES += \
     interrupts.cpp \
     timer.cpp \
     memorymap.cpp \
-    memops.cpp \
     paging.cpp \
-    physicalallocator.cpp
+    physicalallocator.cpp \
+    support/memops.cpp
 
 HEADERS += \
     boot/bios.hpp \
@@ -51,27 +51,27 @@ HEADERS += \
     timer.hpp \
     sort.hpp \
     memorymap.hpp \
-    array.hpp \
     assert.hpp \
-    memops.hpp \
-    bitset.hpp \
     math.hpp \
     paging.hpp \
-    physicalallocator.hpp
+    physicalallocator.hpp \
+    containers/bitset.hpp \
+    containers/array.hpp \
+    support/memops.hpp
 
 # Global constructors support
 #
 # The following objects shall be included in the linking process to enable global
 # constructors support. See http://wiki.osdev.org/Calling_Global_Constructors for reference
-CRTI     = $$PWD/crti.S
+CRTI     = $$PWD/support/crti.S
 CRTBEGIN = $$system($$QMAKE_CC $$QMAKE_CFLAGS -print-file-name=crtbegin.o)
 CRTEND   = $$system($$QMAKE_CC $$QMAKE_CFLAGS -print-file-name=crtend.o)
-CRTN     = $$PWD/crtn.S
+CRTN     = $$PWD/support/crtn.S
 
 QMAKE_LFLAGS += $$CRTI $$CRTBEGIN # These objects appear at the start of the link command
 LIBS         += $$CRTEND $$CRTN   # These objects appear at the end of the link command
 
 OTHER_FILES += \
     kernel.ld \
-    crti.S \
-    crtn.S \
+    support/crti.S \
+    support/crtn.S

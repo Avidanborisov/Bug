@@ -69,7 +69,7 @@ x86_get_cs:
     mov eax, cs
     ret
 
-.macro create_reg_property reg
+.macro createRegisterProperty reg
 .global x86_\reg
 x86_\reg:
 
@@ -85,11 +85,11 @@ x86_get_\reg:
     ret
 .endm
 
-create_reg_property ds
-create_reg_property es
-create_reg_property fs
-create_reg_property gs
-create_reg_property ss
-create_reg_property cr0
-create_reg_property cr2
-create_reg_property cr3
+createRegisterProperty ds
+createRegisterProperty es
+createRegisterProperty fs
+createRegisterProperty gs
+createRegisterProperty ss
+createRegisterProperty cr0
+createRegisterProperty cr2
+createRegisterProperty cr3

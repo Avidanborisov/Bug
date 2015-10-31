@@ -91,15 +91,4 @@ void E820::sanitizeMap() {
             prevType = currType;
         }
     }
-
-//    for (size_t i = 0; i < count; ++i) {
-//        const auto& e = entries[i];
-//        Console::printf("%.8x %.8x %d\n", (uint32_t)e.base, (uint32_t)e.length, e.type);
-//    }
-
-//    Console::print('\n');
-
-//    for (const auto& e : map) {
-//        Console::printf("%.8x %.8x %d\n", (uint32_t)e.base, (uint32_t)e.length, e.type);
-//    }
 }

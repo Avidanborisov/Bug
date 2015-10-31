@@ -24,4 +24,6 @@ SECTIONS {
         *(COMMON)
         *(.bss)
     }
+
+    kernelEnd = .;
 }

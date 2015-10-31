@@ -4,7 +4,7 @@
 class Kernel {
 public:
     static void main() asm("kmain");
-    static void panic(const char* msg, ...);
+    [[noreturn]] static void panic(const char* msg, ...);
 };
 
 #endif // KERNEL_HPP

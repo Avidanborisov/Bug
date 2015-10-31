@@ -5,6 +5,7 @@
 #include "timer.hpp"
 #include "memorymap.hpp"
 #include "x86.hpp"
+#include "physicalallocator.hpp"
 
 void Kernel::main() {
     Timer::disable();
@@ -14,6 +15,12 @@ void Kernel::main() {
     Interrupts::init();
 
     MemoryMap::init();
+
+    Console::printf("\n%x\n", PhysicalAllocator::getKernelEnd());
+    PhysicalAllocator::init();
+    Console::printf("\n%x\n", PhysicalAllocator::getKernelEnd());
+    uint32_t addr = PhysicalAllocator::allocate(1);
+    Console::printf("\n%x\n", addr);
 }
 
 void Kernel::panic(const char* msg, ...) {

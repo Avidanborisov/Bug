@@ -48,6 +48,32 @@ public:
         return size_;
     }
 
+    size_t findLast(const T& val) const {
+        for (size_t i = size_ - 1; i-- > 0;)
+            if (data_[i] == val)
+                return i;
+
+        return size_;
+    }
+
+    template<class Predicate>
+    size_t filter(Predicate cond) const {
+        for (size_t i = 0; i < size_; ++i)
+            if (cond(data_[i]))
+                return i;
+
+        return size_;
+    }
+
+    template<class Predicate>
+    size_t filterLast(Predicate cond) const {
+        for (size_t i = size_ - 1; i-- > 0;)
+            if (cond(data_[i]))
+                return i;
+
+        return size_;
+    }
+
     size_t capacity() const {
         return N;
     }

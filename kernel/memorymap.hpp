@@ -19,7 +19,15 @@ public:
         Entry(const E820::Entry& e);
     };
 
-    static Array<Entry, E820::MAX_ENTRIES * 2> entries; // 2x to save space for unlisted regions
+    static uint32_t getEnd();
+
+    using HoleList = Array<Entry, E820::MAX_ENTRIES>;
+    static const HoleList& getHoles();
+
+private:
+    static uint32_t start;
+    static uint32_t end;
+    static HoleList holes;
 };
 
 #endif // MEMORYMAP_HPP

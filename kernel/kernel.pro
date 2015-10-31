@@ -30,7 +30,10 @@ SOURCES += \
     irqs.S \
     interrupts.cpp \
     timer.cpp \
-    memorymap.cpp
+    memorymap.cpp \
+    memops.cpp \
+    paging.cpp \
+    physicalallocator.cpp
 
 HEADERS += \
     boot/bios.hpp \
@@ -49,7 +52,12 @@ HEADERS += \
     sort.hpp \
     memorymap.hpp \
     array.hpp \
-    assert.hpp
+    assert.hpp \
+    memops.hpp \
+    bitset.hpp \
+    math.hpp \
+    paging.hpp \
+    physicalallocator.hpp
 
 # Global constructors support
 #

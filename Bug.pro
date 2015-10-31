@@ -24,4 +24,5 @@ OTHER_FILES += \
     scripts/debug-qemu.sh \
     scripts/run-bochs.sh \
     scripts/debug-bochs.sh \
+    scripts/create-usb.sh \
     scripts/bochsrc.txt

@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Assumes the current directory is the build directory (not the scripts directory)
+cd "$(dirname "$0")" # go to the current directory (scripts directory)
+cd ../../build-*/    # go to the build directory
 
 # Create FAT12 floppy with boot sector
 dd if=/dev/zero of=Bug.img status=none bs=512 count=2880

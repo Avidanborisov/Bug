@@ -30,7 +30,7 @@ void IRQ::init() {
 
     // Restart the both PICs
     master.sendCommand(0x11);
-    master.sendCommand(0x11);
+    slave.sendCommand(0x11);
 
     // Make PIC1 and PIC2 signal to ISR32..47
     master.sendData(NEW_IRQ_OFFSET);

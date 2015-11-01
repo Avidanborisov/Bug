@@ -53,10 +53,6 @@ void MemoryMap::init() {
         }
     }
 
-    for (const auto& e : entries) {
-        Console::printf("%.8x %.8x %t\n", e.base, e.length, e.available);
-    }
-
     // page align all entries
     for (auto& e : entries) {
         if (e.available) {
@@ -85,21 +81,26 @@ void MemoryMap::init() {
         if (!e.available)
             holes.insert(e);
     }
-
-    for (const auto& e : entries) {
-        Console::printf("%.8x %.8x %t\n", e.base, e.length, e.available);
-    }
-
-    Console::printf("start = %x, end = %x\n", start, end);
-    for (const auto& e : holes) {
-        Console::printf("%.8x %.8x %t\n", e.base, e.length, e.available);
-    }
 }
 
 uint32_t MemoryMap::getEnd(){
     return end;
 }
 
-const MemoryMap::HoleList&MemoryMap::getHoles() {
+const MemoryMap::HoleList& MemoryMap::getHoles() {
     return holes;
+}
+
+const MemoryMap::Entry* MemoryMap::isInHole(uint32_t base, uint32_t length) {
+    for (const auto& hole : holes) {
+        auto holeStart    = hole.base;
+        auto holeEnd      = hole.base + hole.length;
+        auto addressStart = base;
+        auto addressEnd   = base + length;
+
+        if (holeStart < addressEnd && addressStart < holeEnd)
+            return &hole;
+    }
+
+    return nullptr;
 }

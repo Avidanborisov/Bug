@@ -6,6 +6,8 @@
 #include "memorymap.hpp"
 #include "x86.hpp"
 #include "physicalallocator.hpp"
+#include "virtualallocator.hpp"
+#include "paging.hpp"
 
 void Kernel::main() {
     Timer::disable();
@@ -16,11 +18,13 @@ void Kernel::main() {
 
     MemoryMap::init();
 
-    Console::printf("\n%x\n", PhysicalAllocator::getKernelEnd());
     PhysicalAllocator::init();
-    Console::printf("\n%x\n", PhysicalAllocator::getKernelEnd());
-    uint32_t addr = PhysicalAllocator::allocate(1);
-    Console::printf("\n%x\n", addr);
+    VirtualAllocator::init();
+    Paging::init();
+    VirtualAllocator::finalize();
+    PhysicalAllocator::finalize();
+
+    Console::print("Paging initialized!\n");
 }
 
 void Kernel::panic(const char* msg, ...) {

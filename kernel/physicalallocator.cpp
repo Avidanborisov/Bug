@@ -5,16 +5,19 @@
 
 extern uint32_t kernelEnd;
 uint32_t PhysicalAllocator::kernelEnd = Paging::alignUp(&kernelEnd);
-bool PhysicalAllocator::initialized = false;
+bool PhysicalAllocator::finalized = false;
 
-Bitset<> PhysicalAllocator::AddressBlockMap::memory;
-uint32_t PhysicalAllocator::AddressBlockMap::end;
+Bitset<> PhysicalAllocator::memory;
 
-uint32_t PhysicalAllocator::reserve(size_t blocks) {
-    assert(!initialized);
+uint32_t PhysicalAllocator::reserve(size_t pages) {
+    assert(!finalized);
+
+    // if reserved memory is in hole
+    if (auto hole = MemoryMap::isInHole(kernelEnd, pages * Paging::PAGE_SIZE))
+        kernelEnd = hole->base + hole->length; // jump over to free region
 
     auto address = kernelEnd;
-    kernelEnd += blocks * BLOCK_SIZE;
+    kernelEnd += pages * Paging::PAGE_SIZE;
     return address;
 }
 
@@ -23,40 +26,24 @@ uint32_t PhysicalAllocator::getKernelEnd() {
 }
 
 void PhysicalAllocator::init() {
-    AddressBlockMap::init(MemoryMap::getEnd());
+    const auto PAGES = MemoryMap::getEnd() / Paging::PAGE_SIZE;
 
+    memory.init(PAGES, Paging::PAGE_SIZE, reserve);
     for (const auto& hole : MemoryMap::getHoles())
-        AddressBlockMap::mark(hole.base, hole.length / BLOCK_SIZE);
-
-    AddressBlockMap::mark(0, kernelEnd / BLOCK_SIZE);
-    initialized = true;
+        memory.set(hole.base / Paging::PAGE_SIZE, hole.length / Paging::PAGE_SIZE);
 }
 
-uint32_t PhysicalAllocator::allocate(size_t blocks) {
-    uint32_t address = AddressBlockMap::findFreeBlocks(blocks);
-    AddressBlockMap::mark(address, blocks);
-    return address;
+void PhysicalAllocator::finalize() {
+    memory.set(0, kernelEnd / Paging::PAGE_SIZE);
+    finalized = true;
 }
 
-void PhysicalAllocator::free(uint32_t address, size_t blocks) {
-    AddressBlockMap::free(address, blocks);
+uint32_t PhysicalAllocator::allocate(size_t pages) {
+    uint32_t page = memory.findFree(pages);
+    memory.set(page, pages);
+    return page * Paging::PAGE_SIZE;
 }
 
-void PhysicalAllocator::AddressBlockMap::init(uint32_t endAddress) {
-    end = endAddress / BLOCK_SIZE;
-    memory.init(end, BLOCK_SIZE, PhysicalAllocator::reserve);
-}
-
-uint32_t PhysicalAllocator::AddressBlockMap::findFreeBlocks(size_t blocks) {
-    return memory.findFree(blocks) * BLOCK_SIZE;
-}
-
-void PhysicalAllocator::AddressBlockMap::mark(uint32_t address, size_t blocks) {
-    assert(address / BLOCK_SIZE + blocks <= end);
-    memory.set(address / BLOCK_SIZE, blocks);
-}
-
-void PhysicalAllocator::AddressBlockMap::free(uint32_t address, size_t blocks) {
-    assert(address / BLOCK_SIZE + blocks <= end);
-    memory.clear(address / BLOCK_SIZE, blocks);
+void PhysicalAllocator::free(uint32_t address, size_t pages) {
+    memory.clear(address / Paging::PAGE_SIZE, pages);
 }

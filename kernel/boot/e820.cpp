@@ -2,6 +2,7 @@
 #include "bios.hpp"
 #include "sort.hpp"
 #include "console.hpp"
+#include "framebuffer.hpp"
 
 asm(".code16gcc");
 
@@ -19,7 +20,7 @@ void E820::detectMemory() {
         args.ebx = continuationID;
         args.ecx = sizeof entry;
         args.edx = SMAP_SIGNATURE;
-        args.edi = (uint32_t)&entry;
+        args.edi = reinterpret_cast<uint32_t>(&entry);
 
         BIOS::RegPack output = BIOS::interrupt(0x15, args);
         if (output.eax != SMAP_SIGNATURE)

@@ -2,7 +2,7 @@
 #include "x86.hpp"
 
 using Monitor = uint16_t[Framebuffer::HEIGHT][Framebuffer::WIDTH];
-static auto& monitor = *(Monitor *)0xB8000;
+static auto& monitor = *reinterpret_cast<Monitor*>(0xb8000);
 
 Framebuffer::Cursor Framebuffer::cursor = { 0, 0 };
 

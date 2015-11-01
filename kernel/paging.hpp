@@ -47,7 +47,7 @@ private:
     static constexpr size_t ENTRIES = 1024;
 
     struct Table {
-        struct Entry {
+        class Entry {
         public:
             constexpr Entry() : value(0) { }
             Entry(uint32_t address, Flags flags = Flags::NONE);
@@ -66,7 +66,7 @@ private:
     static_assert(sizeof(Table::Entry) * ENTRIES == PAGE_SIZE, "Page Table takes whole page");
 
     struct Directory {
-        struct Entry {
+        class Entry {
         public:
             constexpr Entry() : value(0) { }
             Entry(Table::Entry* table, Flags flags = Flags::NONE);

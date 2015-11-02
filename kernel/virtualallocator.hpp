@@ -9,7 +9,7 @@
 class VirtualAllocator {
 public:
     static void init();
-    static void finalize();
+    static void exclude(uint32_t base, size_t length);
 
     static uint32_t allocate(size_t pages);
     static void free(uint32_t address, size_t pages);

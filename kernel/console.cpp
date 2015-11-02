@@ -41,22 +41,22 @@ void Console::print(uint32_t num, int base, int minWidth, bool zeroPad, Color fg
 void Console::print(int32_t num, int base, int minWidth, bool zeroPad, Console::Color fg, Console::Color bg) {
     if (num < 0) {
         print('-', fg, bg);
-        print((uint32_t)-num, base, minWidth, zeroPad, fg, bg);
+        print(static_cast<uint32_t>(-num), base, minWidth, zeroPad, fg, bg);
     } else {
-        print((uint32_t)num, base, minWidth, zeroPad, fg, bg);
+        print(static_cast<uint32_t>(num), base, minWidth, zeroPad, fg, bg);
     }
 }
 
 void Console::print(const void* addr, int base, int minWidth, bool zeroPad, Console::Color fg, Console::Color bg) {
-    print((uint32_t)addr, base, minWidth, zeroPad, fg, bg);
+    print(reinterpret_cast<uint32_t>(addr), base, minWidth, zeroPad, fg, bg);
 }
 
 void Console::print(unsigned num, int base, int minWidth, bool zeroPad, Console::Color fg, Console::Color bg) {
-    print((uint32_t)num, base, minWidth, zeroPad, fg, bg);
+    print(static_cast<uint32_t>(num), base, minWidth, zeroPad, fg, bg);
 }
 
 void Console::print(int num, int base, int minWidth, bool zeroPad, Console::Color fg, Console::Color bg) {
-    print((int32_t)num, base, minWidth, zeroPad, fg, bg);
+    print(static_cast<int32_t>(num), base, minWidth, zeroPad, fg, bg);
 }
 
 void Console::printf(const char* fmt, ...) {

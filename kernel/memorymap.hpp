@@ -7,6 +7,8 @@
 
 class MemoryMap {
 public:
+    static constexpr uint64_t MAX_MEMORY = 0x100000000; // 4GiB
+
     static void init();
 
     struct Entry {

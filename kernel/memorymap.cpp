@@ -14,8 +14,6 @@ MemoryMap::Entry::Entry(const E820::Entry& e) :
     base(e.base), length(e.length), available(e.isAvailable()) { }
 
 void MemoryMap::init() {
-    constexpr uint64_t MAX_MEMORY = 0x100000000; // 4GiB
-
     E820::sanitizeMap();
 
     Array<Entry, E820::MAX_ENTRIES * 2> entries; // 2x to save space for unlisted regions

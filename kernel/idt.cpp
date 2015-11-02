@@ -14,7 +14,7 @@ void IDT::setEntry(uint8_t index, IDT::Handler* func, uint8_t ring) {
 }
 
 IDT::Entry::Entry(IDT::Handler* func, uint8_t ring) {
-    auto base = (uint32_t)func;
+    auto base = reinterpret_cast<uint32_t>(func);
 
     baseLow  = base & 0xffff;
     baseHigh = (base >> 16) & 0xffff;
@@ -31,5 +31,5 @@ IDT::Entry::Entry(IDT::Handler* func, uint8_t ring) {
 
 IDT::Pointer::Pointer(const IDT::Entry* base, uint16_t size) :
     size(size),
-    base((uint32_t)base)
+    base(reinterpret_cast<uint32_t>(base))
 { }

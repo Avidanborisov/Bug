@@ -27,6 +27,9 @@ public:
     static constexpr auto HEIGHT = 25;
     static constexpr auto WIDTH  = 80;
 
+    static constexpr uint32_t PHYSICAL_MEMORY_START = 0xb8000;
+    static constexpr uint32_t PHYSICAL_MEMORY_END   = 0xb8fa0;
+
     // clear screen
     static void clear();
 

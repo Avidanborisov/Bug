@@ -10,6 +10,8 @@ public:
     static constexpr uint32_t PAGE_SIZE = 4096;
     static constexpr uint32_t PAGE_MASK = 0xfffff000;
 
+    static constexpr uint32_t PAGING_BIT = 0x80000000;
+
     constexpr static uint32_t alignDown(uint32_t address) {
         return Math::roundDown(address, PAGE_SIZE);
     }
@@ -28,6 +30,10 @@ public:
         return alignUp(reinterpret_cast<uint32_t>(address));
     }
 
+    constexpr static bool isAligned(uint32_t address) {
+        return address % PAGE_SIZE == 0;
+    }
+
     enum class Flags : uint32_t {
         NONE           = 0x00,
         PRESENT        = 0x01, // table/directory entry is present
@@ -39,8 +45,18 @@ public:
     };
 
     static void init();
+    static void map(uint32_t virtualAddress, uint32_t physicalAddress, Flags flags = Flags::NONE);
 
 private:
+    struct Indexes {
+        uint32_t pde, pte;
+    };
+
+    static Indexes parseAddress(uint32_t address);
+
+    template<bool isPagingInitialized>
+    static void map(uint32_t virtualAddress, uint32_t physicalAddress, Flags flags = Flags::NONE);
+
     template<class Func>
     static void identityMap(uint32_t startAddress, Func getEndAddress, Flags flags = Flags::NONE);
 
@@ -52,14 +68,17 @@ private:
             constexpr Entry() : value(0) { }
             Entry(uint32_t address, Flags flags = Flags::NONE);
 
-            uint32_t getAddress() const;
-            void setAddress(uint32_t address);
+            template<Paging::Flags flags>
+            constexpr bool is() const;
 
-        private:
+        public:
             uint32_t value;
         };
 
-        static Entry* create(); // create a new page table (1024 page table entries)
+        template<class PageAllocator>
+        static Entry* allocate(PageAllocator alloc); // create a new page table (1024 page table entries)
+
+        static void init(Entry* first); // initialize page table
     };
 
     static_assert(sizeof(Table::Entry) == 4, "Page Table Entry is 4 bytes long");
@@ -71,30 +90,35 @@ private:
             constexpr Entry() : value(0) { }
             Entry(Table::Entry* table, Flags flags = Flags::NONE);
 
-            Table::Entry* getTable() const;
-            void setTable(Table::Entry* table);
+            Table::Entry* getTablePhysical() const;
 
-        private:
+            template<Paging::Flags flags>
+            constexpr bool is() const;
+
+        public:
             uint32_t value;
         };
 
-        static Entry* create(); // create a new page directory (1024 page directory entries)
+        template<class PageAllocator>
+        static Entry* allocate(PageAllocator alloc); // create a new page directory (1024 page directory entries)
+
+        static void init(Entry* first); // initialize page table
     };
 
     static_assert(sizeof(Directory::Entry) == 4, "Page Directory Entry is 4 bytes long");
     static_assert(sizeof(Directory::Entry) * ENTRIES == PAGE_SIZE, "Page Directory takes whole page");
 
     static Directory::Entry* directory;
+    static constexpr auto VIRTUAL_TABLES = reinterpret_cast<Table::Entry*>(0xffc00000);
 };
-
 
 inline uint32_t& operator|=(uint32_t& lhs, Paging::Flags rhs) {
     lhs = static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs);
     return lhs;
 }
 
-inline uint32_t operator|(uint32_t lhs, Paging::Flags rhs) {
-    return lhs |= rhs;
+inline constexpr uint32_t operator|(uint32_t lhs, Paging::Flags rhs) {
+    return static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs);
 }
 
 inline Paging::Flags& operator|=(Paging::Flags& lhs, Paging::Flags rhs) {
@@ -102,8 +126,26 @@ inline Paging::Flags& operator|=(Paging::Flags& lhs, Paging::Flags rhs) {
     return lhs;
 }
 
-inline Paging::Flags operator|(Paging::Flags lhs, Paging::Flags rhs) {
-    return lhs |= rhs;
+inline constexpr Paging::Flags operator|(Paging::Flags lhs, Paging::Flags rhs) {
+    return static_cast<Paging::Flags>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs));
+}
+
+inline uint32_t& operator&=(uint32_t& lhs, Paging::Flags rhs) {
+    lhs = static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs);
+    return lhs;
+}
+
+inline constexpr uint32_t operator&(uint32_t lhs, Paging::Flags rhs) {
+    return static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs);
+}
+
+inline Paging::Flags& operator&=(Paging::Flags& lhs, Paging::Flags rhs) {
+    lhs = static_cast<Paging::Flags>(static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs));
+    return lhs;
+}
+
+inline constexpr Paging::Flags operator&(Paging::Flags lhs, Paging::Flags rhs) {
+    return static_cast<Paging::Flags>(static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs));
 }
 
 #endif // PAGING_HPP

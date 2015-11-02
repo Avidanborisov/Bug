@@ -53,5 +53,5 @@ GDT::Entry::Entry(uint32_t base, uint32_t limit, uint8_t ring, bool isExec) {
 
 GDT::Pointer::Pointer(const GDT::Entry* base, uint16_t size) :
     size(size),
-    base((uint32_t)base)
+    base(reinterpret_cast<uint32_t>(base))
 { }

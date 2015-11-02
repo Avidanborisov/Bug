@@ -71,7 +71,7 @@ private:
             template<Paging::Flags flags>
             constexpr bool is() const;
 
-        public:
+        private:
             uint32_t value;
         };
 
@@ -95,7 +95,7 @@ private:
             template<Paging::Flags flags>
             constexpr bool is() const;
 
-        public:
+        private:
             uint32_t value;
         };
 

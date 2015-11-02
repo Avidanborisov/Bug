@@ -20,6 +20,7 @@ public:
     static void interrupt(uint8_t n)             asm("x86_interrupt");
 
     static void invlpg(uint32_t virtualAddress)  asm("x86_invlpg");
+    static void invlpg(const void* virt)         asm("x86_invlpg");
 
     class regs {
         template<class Base>

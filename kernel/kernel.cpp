@@ -27,6 +27,7 @@ void Kernel::main() {
 
     // make sure mapping works: map some virtual address to the video framebuffer
     Console::printf("%t\n", Paging::map(0x100000, 0xb8000));
+    Console::printf("%t\n", Paging::map(0xff000, 0xb8000, 2));
     *(int *)0x100008 = 0xffffffff;
     Console::printf("%t\n", Paging::map(0x1000000, 0xb8000));
     *(int *)0x1000016 = 0xffffffff;
@@ -34,8 +35,6 @@ void Kernel::main() {
 
     // page fault!
     // *(int *)0x1000000 = 0xffffffff;
-
-    Console::print("Paging initialized!\n");
 }
 
 void Kernel::panic(const char* msg, ...) {

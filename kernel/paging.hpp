@@ -57,11 +57,10 @@ private:
         uint32_t pde, pte;
     };
 
-    static Indexes parseAddress(uint32_t address);
+    static Indexes parseAddress(uint32_t virtualAddress);
+    static bool isPresent(uint32_t virtualAddress);
 
-
-
-    template<bool isPagingInitialized>
+    template<bool isPagingEnabled>
     static bool modify(uint32_t virtualAddress, uint32_t physicalAddress, Flags flags = Flags::NONE);
 
     template<class Func>
@@ -77,6 +76,9 @@ private:
 
             template<Paging::Flags flags>
             constexpr bool is() const;
+
+            template<bool isPagingEnabled>
+            static Entry* get(uint32_t virtualAddress, bool create);
 
         private:
             uint32_t value;

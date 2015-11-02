@@ -37,14 +37,16 @@ bool Paging::map(uint32_t virtualAddress, uint32_t physicalAddress, Paging::Flag
 }
 
 bool Paging::map(uint32_t virtualAddress, uint32_t physicalAddress, size_t pages, Paging::Flags flags) {
+    // first make sure all pages are currently unmapped to avoid mapping only a subset of them
     for (size_t page = 0; page < pages; ++page) {
-        if (!map(virtualAddress + page * PAGE_SIZE, physicalAddress + page * PAGE_SIZE, flags)) {
-            // if mapping failed, unmap previously mapped pages
-            while (page-- > 0)
-                unmap(virtualAddress + page * PAGE_SIZE);
-
+        if (isPresent(virtualAddress + page * PAGE_SIZE))
             return false;
-        }
+    }
+
+    // actually map all pages
+    for (size_t page = 0; page < pages; ++page) {
+        if (!map(virtualAddress + page * PAGE_SIZE, physicalAddress + page * PAGE_SIZE, flags))
+            return false;
     }
 
     return true;
@@ -63,18 +65,14 @@ bool Paging::unmap(uint32_t virtualAddress, size_t pages) {
     return true;
 }
 
-Paging::Indexes Paging::parseAddress(uint32_t address) {
-    return { address / PAGE_SIZE / ENTRIES, address / PAGE_SIZE % ENTRIES };
+Paging::Indexes Paging::parseAddress(uint32_t virtualAddress) {
+    return { virtualAddress / PAGE_SIZE / ENTRIES, virtualAddress / PAGE_SIZE % ENTRIES };
 }
 
 template<bool isPagingEnabled>
-bool Paging::modify(uint32_t virtualAddress, uint32_t physicalAddress, Paging::Flags flags) {
-    const enum {
-        MAP, UNMAP
-    } operation = (flags == Flags::NONE) ? UNMAP : MAP;
-
+Paging::Table::Entry* Paging::Table::Entry::get(uint32_t virtualAddress, bool create) {
     if (!isAligned(virtualAddress))
-        return false;
+        return nullptr;
 
     auto indexes = parseAddress(virtualAddress);
     Directory::Entry& pde = directory[indexes.pde];
@@ -84,25 +82,49 @@ bool Paging::modify(uint32_t virtualAddress, uint32_t physicalAddress, Paging::F
     };
 
     if (!pde.is<Flags::PRESENT>()) {
-        if (operation == UNMAP)
-            return false;
+        if (!create)
+            return nullptr;
 
-        auto table = Table::allocate(isPagingEnabled ? PhysicalAllocator::allocate : PhysicalAllocator::reserve);
+        auto table = allocate(isPagingEnabled ? PhysicalAllocator::allocate : PhysicalAllocator::reserve);
         pde = Directory::Entry(table, Flags::WRITE | Flags::USER);
-        Table::init(getTable());
+        table = getTable();
+
+        x86::invlpg(table);
+        init(table);
     }
 
-    Table::Entry& pte = getTable()[indexes.pte];
-    if (pte.is<Flags::PRESENT>()) {
+    Entry& pte = getTable()[indexes.pte];
+    return &pte;
+}
+
+bool Paging::isPresent(uint32_t virtualAddress) {
+    auto pte = Table::Entry::get<true>(virtualAddress, false);
+    if (!pte)
+        return false;
+
+    return pte->is<Flags::PRESENT>();
+}
+
+template<bool isPagingEnabled>
+bool Paging::modify(uint32_t virtualAddress, uint32_t physicalAddress, Paging::Flags flags) {
+    const enum {
+        MAP, UNMAP
+    } operation = (flags == Flags::NONE) ? UNMAP : MAP;
+
+    Table::Entry* pte = Table::Entry::get<isPagingEnabled>(virtualAddress, operation == MAP);
+    if (!pte)
+        return false;
+
+    if (pte->is<Flags::PRESENT>()) {
         if (operation == MAP)
             return false;
 
-        pte = Table::Entry(); // empty entry (not present)
+        *pte = Table::Entry(); // empty entry (not present)
     } else {
         if (operation == UNMAP)
             return false;
 
-        pte = Table::Entry(physicalAddress, flags);
+        *pte = Table::Entry(physicalAddress, flags);
     }
 
     x86::invlpg(virtualAddress);

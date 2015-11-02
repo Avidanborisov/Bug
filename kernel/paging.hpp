@@ -45,7 +45,12 @@ public:
     };
 
     static void init();
-    static void map(uint32_t virtualAddress, uint32_t physicalAddress, Flags flags = Flags::NONE);
+
+    static bool map(uint32_t virtualAddress, uint32_t physicalAddress, Flags flags = Flags::NONE);
+    static bool map(uint32_t virtualAddress, uint32_t physicalAddress, size_t pages, Flags flags = Flags::NONE);
+
+    static bool unmap(uint32_t virtualAddress);
+    static bool unmap(uint32_t virtualAddress, size_t pages);
 
 private:
     struct Indexes {
@@ -54,8 +59,10 @@ private:
 
     static Indexes parseAddress(uint32_t address);
 
+
+
     template<bool isPagingInitialized>
-    static void map(uint32_t virtualAddress, uint32_t physicalAddress, Flags flags = Flags::NONE);
+    static bool modify(uint32_t virtualAddress, uint32_t physicalAddress, Flags flags = Flags::NONE);
 
     template<class Func>
     static void identityMap(uint32_t startAddress, Func getEndAddress, Flags flags = Flags::NONE);

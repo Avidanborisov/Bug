@@ -52,6 +52,12 @@ intNum:
 
     ret
 
+.global x86_invlpg
+x86_invlpg:
+    mov eax, [esp + 4]
+    invlpg [eax]
+    ret
+
 .global x86_cs
 x86_cs:
 

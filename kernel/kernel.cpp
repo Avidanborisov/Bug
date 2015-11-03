@@ -20,10 +20,10 @@ void Kernel::main() {
 
     PhysicalAllocator::init();
     VirtualAllocator::init();
-    Paging::init();
     PhysicalAllocator::finalize();
 
-    Console::print("Paging initialized!\n");
+    Paging::init();
+    Console::printf("Paging initialized!\n");
 
     // make sure mapping works: map some virtual address to the video framebuffer
     Console::printf("%t\n", Paging::map(0x100000, 0xb8000));

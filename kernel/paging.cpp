@@ -2,23 +2,19 @@
 #include "physicalallocator.hpp"
 #include "virtualallocator.hpp"
 #include "x86.hpp"
-#include "console.hpp"
-#include "isr.hpp"
-#include "memorymap.hpp"
+#include "framebuffer.hpp"
 
 Paging::Directory::Entry* Paging::directory;
 
 void Paging::init() {
-    directory = Directory::allocate(PhysicalAllocator::reserve);
+    directory = Directory::allocate();
     Directory::init(directory);
 
     // identity map kernel code and data
-    identityMap(0, PhysicalAllocator::getKernelEnd, Flags::USER);
+    identityMap(0, PhysicalAllocator::getKernelEnd(), Flags::USER);
 
     // identity map framebuffer video memory
-    identityMap(alignDown(Framebuffer::PHYSICAL_MEMORY_START), [&] {
-        return alignUp(Framebuffer::PHYSICAL_MEMORY_END);
-    }, Flags::USER);
+    identityMap(alignDown(Framebuffer::PHYSICAL_MEMORY_START), alignUp(Framebuffer::PHYSICAL_MEMORY_END), Flags::USER);
 
     // recursive page directory mapping - map last pde to point to the page directory.
     // since pde's and pte's are in compatiable format, this allows accessing physical
@@ -30,6 +26,8 @@ void Paging::init() {
 
     x86::regs::cr3 = reinterpret_cast<uint32_t>(directory);
     x86::regs::cr0 |= PAGING_BIT;
+
+    directory = VIRTUAL_DIRECTORY;
 }
 
 bool Paging::map(uint32_t virtualAddress, uint32_t physicalAddress, Paging::Flags flags) {
@@ -85,12 +83,11 @@ Paging::Table::Entry* Paging::Table::Entry::get(uint32_t virtualAddress, bool cr
         if (!create)
             return nullptr;
 
-        auto table = allocate(isPagingEnabled ? PhysicalAllocator::allocate : PhysicalAllocator::reserve);
-        pde = Directory::Entry(table, Flags::WRITE | Flags::USER);
-        table = getTable();
+        pde = Directory::Entry(Table::allocate(), Flags::WRITE | Flags::USER);
+        auto table = getTable();
 
-        x86::invlpg(table);
-        init(table);
+        x86::invlpg(table); // flush table address in TLB
+        Table::init(table);
     }
 
     Entry& pte = getTable()[indexes.pte];
@@ -127,16 +124,15 @@ bool Paging::modify(uint32_t virtualAddress, uint32_t physicalAddress, Paging::F
         *pte = Table::Entry(physicalAddress, flags);
     }
 
-    x86::invlpg(virtualAddress);
+    x86::invlpg(virtualAddress); // flush virtual address in TLB
     return true;
 }
 
-template<class Func>
-void Paging::identityMap(uint32_t startAddress, Func getEndAddress, Paging::Flags flags) {
-    for (size_t addr = startAddress; addr < getEndAddress(); addr += PAGE_SIZE)
-        modify<false>(addr, addr, flags);
+void Paging::identityMap(uint32_t startAddress, uint32_t endAddress, Paging::Flags flags) {
+    for (size_t addr = startAddress; addr < endAddress; addr += PAGE_SIZE)
+        modify<false>(addr, addr, flags | Flags::PRESENT);
 
-    VirtualAllocator::exclude(startAddress, getEndAddress() - startAddress);
+    VirtualAllocator::exclude(startAddress, endAddress - startAddress);
 }
 
 Paging::Table::Entry::Entry(uint32_t address, Flags flags) : value(0) {
@@ -149,9 +145,8 @@ constexpr bool Paging::Table::Entry::is() const {
     return value & flags;
 }
 
-template<class PageAllocator>
-Paging::Table::Entry* Paging::Table::allocate(PageAllocator alloc) {
-    return reinterpret_cast<Entry*>(alloc(1)); // allocate 1 page
+Paging::Table::Entry* Paging::Table::allocate() {
+    return reinterpret_cast<Entry*>(PhysicalAllocator::allocate(1)); // allocate 1 page = entire page table
 }
 
 void Paging::Table::init(Paging::Table::Entry* first) {
@@ -176,9 +171,8 @@ constexpr bool Paging::Directory::Entry::is() const {
     return value & flags;
 }
 
-template<class PageAllocator>
-Paging::Directory::Entry* Paging::Directory::allocate(PageAllocator alloc) {
-    return reinterpret_cast<Entry*>(alloc(1)); // allocate 1 page
+Paging::Directory::Entry* Paging::Directory::allocate() {
+    return reinterpret_cast<Entry*>(PhysicalAllocator::allocate(1)); // allocate 1 page = entire directory
 }
 
 void Paging::Directory::init(Paging::Directory::Entry* first) {

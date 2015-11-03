@@ -81,7 +81,7 @@ void MemoryMap::init() {
     }
 }
 
-uint32_t MemoryMap::getEnd(){
+uint32_t MemoryMap::getEnd() {
     return end;
 }
 

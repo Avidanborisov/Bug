@@ -15,9 +15,9 @@ public:
     template<class StaticAllocator>
     void init(size_t size, size_t allocBlockSize, StaticAllocator alloc) {
         units = Math::divRoundUp(size, BITS_PER_UNIT);
-        auto bytes = Math::divRoundUp(units * sizeof(Unit), allocBlockSize);
+        auto blocks = Math::divRoundUp(units * sizeof(Unit), allocBlockSize);
 
-        arr = reinterpret_cast<Unit*>(alloc(bytes));
+        arr = reinterpret_cast<Unit*>(alloc(blocks));
         clear();
     }
 

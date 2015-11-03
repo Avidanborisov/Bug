@@ -1,7 +1,8 @@
 #include "irq.hpp"
 #include "idt.hpp"
-#include "console.hpp"
 #include "x86.hpp"
+#include "assert.hpp"
+#include "console.hpp"
 
 extern "C" void  irq0(void);
 extern "C" void  irq1(void);
@@ -66,11 +67,7 @@ void IRQ::init() {
 }
 
 void IRQ::handle(uint8_t num, IRQ::Handler* handler) {
-    if (num >= NUM_HANDLERS) {
-        Console::printf(Console::Color::RED, "Invalid IRQ handler num (%d)!\n", num);
-        return;
-    }
-
+    assert(num < NUM_HANDLERS);
     handlers[num] = handler;
 }
 

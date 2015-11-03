@@ -14,8 +14,8 @@ public:
     static void init();
     static void finalize();
 
-    static uint32_t allocate(size_t blocks);
-    static void free(uint32_t address, size_t blocks);
+    static uint32_t allocate(size_t pages);
+    static void free(uint32_t address, size_t pages);
 
 private:
     static uint32_t kernelEnd;

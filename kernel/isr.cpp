@@ -1,5 +1,6 @@
 #include "isr.hpp"
 #include "idt.hpp"
+#include "assert.hpp"
 #include "console.hpp"
 
 extern "C" void  isr0(void);
@@ -73,11 +74,7 @@ void ISR::init() {
 }
 
 void ISR::handle(uint8_t num, ISR::Handler* handler) {
-    if (num >= NUM_HANDLERS) {
-        Console::printf(Console::Color::RED, "Invalid ISR handler num (%d)!\n", num);
-        return;
-    }
-
+    assert(num < NUM_HANDLERS);
     handlers[num] = handler;
 }
 

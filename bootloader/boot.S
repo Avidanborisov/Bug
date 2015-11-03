@@ -53,7 +53,6 @@ stub:
  * The main bootloader code. Loads a second stage binary image to LOAD_SEGMENT
  * and jumps to it.
  */
-
 main:
     cld
 

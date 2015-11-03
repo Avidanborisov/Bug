@@ -5,7 +5,7 @@
 sector:    .byte 0
 track:     .byte 0
 head:      .byte 0
-diskError: .string "DE"
+diskError: .string "DE!"
 
 MAX_READ_TRIES = 4
 

@@ -61,10 +61,9 @@ private:
     static bool isPresent(uint32_t virtualAddress);
 
     template<bool isPagingEnabled>
-    static bool modify(uint32_t virtualAddress, uint32_t physicalAddress, Flags flags = Flags::NONE);
+    static bool modify(uint32_t virtualAddress, uint32_t physicalAddress, Flags flags);
 
-    template<class Func>
-    static void identityMap(uint32_t startAddress, Func getEndAddress, Flags flags = Flags::NONE);
+    static void identityMap(uint32_t startAddress, uint32_t endAddress, Flags flags = Flags::NONE);
 
     static constexpr size_t ENTRIES = 1024;
 
@@ -84,9 +83,7 @@ private:
             uint32_t value;
         };
 
-        template<class PageAllocator>
-        static Entry* allocate(PageAllocator alloc); // create a new page table (1024 page table entries)
-
+        static Entry* allocate();       // create a new page table (1024 page table entries)
         static void init(Entry* first); // initialize page table
     };
 
@@ -108,9 +105,7 @@ private:
             uint32_t value;
         };
 
-        template<class PageAllocator>
-        static Entry* allocate(PageAllocator alloc); // create a new page directory (1024 page directory entries)
-
+        static Entry* allocate();       // create a new page directory (1024 page directory entries)
         static void init(Entry* first); // initialize page table
     };
 
@@ -118,7 +113,9 @@ private:
     static_assert(sizeof(Directory::Entry) * ENTRIES == PAGE_SIZE, "Page Directory takes whole page");
 
     static Directory::Entry* directory;
-    static constexpr auto VIRTUAL_TABLES = reinterpret_cast<Table::Entry*>(0xffc00000);
+
+    static constexpr auto VIRTUAL_DIRECTORY = reinterpret_cast<Directory::Entry*>(0xfffff000);
+    static constexpr auto VIRTUAL_TABLES    = reinterpret_cast<Table::Entry*>(0xffc00000);
 };
 
 inline uint32_t& operator|=(uint32_t& lhs, Paging::Flags rhs) {

@@ -4,8 +4,8 @@
 extern "C" {
 
 int memcmp(const void* ap, const void* bp, size_t size) {
-    auto a = reinterpret_cast<const uint8_t*>(ap);
-    auto b = reinterpret_cast<const uint8_t*>(bp);
+    auto a = static_cast<const uint8_t*>(ap);
+    auto b = static_cast<const uint8_t*>(bp);
 
     size_t i;
     for (i = 0; i < size; ++i) {
@@ -19,7 +19,7 @@ int memcmp(const void* ap, const void* bp, size_t size) {
 }
 
 void* memset(void* bufp, int value, size_t size) {
-    auto buf = reinterpret_cast<uint8_t*>(bufp);
+    auto buf = static_cast<uint8_t*>(bufp);
 
     size_t i;
     for (i = 0; i < size; ++i)
@@ -29,8 +29,8 @@ void* memset(void* bufp, int value, size_t size) {
 }
 
 void* memcpy(void* dstp, const void* srcp, size_t size) {
-    auto dst = reinterpret_cast<uint8_t*>(dstp);
-    auto src = reinterpret_cast<const uint8_t*>(srcp);
+    auto dst = static_cast<uint8_t*>(dstp);
+    auto src = static_cast<const uint8_t*>(srcp);
 
     size_t i;
     for (i = 0; i < size; ++i)
@@ -40,8 +40,8 @@ void* memcpy(void* dstp, const void* srcp, size_t size) {
 }
 
 void* memmove(void* dstp, const void* srcp, size_t size) {
-    auto dst = reinterpret_cast<uint8_t*>(dstp);
-    auto src = reinterpret_cast<const uint8_t*>(srcp);
+    auto dst = static_cast<uint8_t*>(dstp);
+    auto src = static_cast<const uint8_t*>(srcp);
 
     if (dstp == srcp || size == 0)
         return dstp;

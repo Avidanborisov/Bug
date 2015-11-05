@@ -5,12 +5,12 @@
 
 extern uint32_t kernelEnd;
 uint32_t PhysicalAllocator::kernelEnd = Paging::alignUp(&kernelEnd);
-bool PhysicalAllocator::finalized = false;
+bool PhysicalAllocator::initialized = false;
 
 Bitset<> PhysicalAllocator::memory;
 
 uint32_t PhysicalAllocator::reserve(size_t pages) {
-    assert(!finalized);
+    assert(!initialized);
 
     // if reserved memory is in hole
     if (auto hole = MemoryMap::isInHole(kernelEnd, pages * Paging::PAGE_SIZE))
@@ -31,17 +31,18 @@ void PhysicalAllocator::init() {
     memory.init(PAGES, Paging::PAGE_SIZE, reserve);
     for (const auto& hole : MemoryMap::getHoles())
         memory.set(hole.base / Paging::PAGE_SIZE, hole.length / Paging::PAGE_SIZE);
-}
 
-void PhysicalAllocator::finalize() {
     memory.set(0, kernelEnd / Paging::PAGE_SIZE);
-    finalized = true;
+    initialized = true;
 }
 
 uint32_t PhysicalAllocator::allocate(size_t pages) {
-    uint32_t page = memory.findFree(pages);
-    memory.set(page, pages);
-    return page * Paging::PAGE_SIZE;
+    auto page = memory.findFree(pages);
+    if (!page)
+        Kernel::panic("No free physical memory!");
+
+    memory.set(*page, pages);
+    return *page * Paging::PAGE_SIZE;
 }
 
 void PhysicalAllocator::free(uint32_t address, size_t pages) {

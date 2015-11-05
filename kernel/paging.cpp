@@ -5,6 +5,7 @@
 #include "framebuffer.hpp"
 
 Paging::Directory::Entry* Paging::directory;
+uint32_t Paging::firstFree;
 
 void Paging::init() {
     directory = Directory::allocate();
@@ -12,6 +13,7 @@ void Paging::init() {
 
     // identity map kernel code and data
     identityMap(0, PhysicalAllocator::getKernelEnd(), Flags::USER);
+    firstFree = PhysicalAllocator::getKernelEnd();
 
     // identity map framebuffer video memory
     identityMap(alignDown(Framebuffer::PHYSICAL_MEMORY_START), alignUp(Framebuffer::PHYSICAL_MEMORY_END), Flags::USER);
@@ -21,13 +23,38 @@ void Paging::init() {
     // table addresses after paging is enabled.
     directory[ENTRIES - 1] = Directory::Entry(reinterpret_cast<Table::Entry*>(directory));
 
-    // The top 4MiB are reserved for the page tables pointed by the last directory entry
-    VirtualAllocator::exclude(reinterpret_cast<uint32_t>(VIRTUAL_TABLES), ENTRIES * PAGE_SIZE);
-
     x86::regs::cr3 = reinterpret_cast<uint32_t>(directory);
     x86::regs::cr0 |= PAGING_BIT;
 
     directory = VIRTUAL_DIRECTORY;
+}
+
+bool Paging::isMapped(uint32_t virtualAddress) {
+    auto pte = Table::Entry::get<true>(virtualAddress, false);
+    if (!pte)
+        return false;
+
+    return pte->is<Flags::PRESENT>();
+}
+
+bool Paging::isMapped(uint32_t virtualAddress, size_t pages) {
+    for (size_t page = 0; page < pages; ++page) {
+        if (isMapped(virtualAddress + page * PAGE_SIZE))
+            return true;
+    }
+
+    return false;
+}
+
+Optional<uint32_t> Paging::findFree(size_t pages) {
+    constexpr auto TOP_ADDRESS = reinterpret_cast<uint32_t>(VIRTUAL_TABLES);
+    const auto lastAddress = TOP_ADDRESS - pages * PAGE_SIZE;
+
+    for (uint32_t address = firstFree; address <= lastAddress; address += PAGE_SIZE)
+        if (!isMapped(address, pages))
+            return address;
+
+    return { };
 }
 
 bool Paging::map(uint32_t virtualAddress, uint32_t physicalAddress, Paging::Flags flags) {
@@ -35,13 +62,9 @@ bool Paging::map(uint32_t virtualAddress, uint32_t physicalAddress, Paging::Flag
 }
 
 bool Paging::map(uint32_t virtualAddress, uint32_t physicalAddress, size_t pages, Paging::Flags flags) {
-    // first make sure all pages are currently unmapped to avoid mapping only a subset of them
-    for (size_t page = 0; page < pages; ++page) {
-        if (isPresent(virtualAddress + page * PAGE_SIZE))
-            return false;
-    }
+    if (isMapped(virtualAddress), pages)
+        return true;
 
-    // actually map all pages
     for (size_t page = 0; page < pages; ++page) {
         if (!map(virtualAddress + page * PAGE_SIZE, physicalAddress + page * PAGE_SIZE, flags))
             return false;
@@ -55,7 +78,7 @@ bool Paging::unmap(uint32_t virtualAddress) {
 }
 
 bool Paging::unmap(uint32_t virtualAddress, size_t pages) {
-    for (size_t page; page < pages; ++page) {
+    for (size_t page = 0; page < pages; ++page) {
         if (!unmap(virtualAddress + page * PAGE_SIZE))
             return false;
     }
@@ -90,16 +113,8 @@ Paging::Table::Entry* Paging::Table::Entry::get(uint32_t virtualAddress, bool cr
         Table::init(table);
     }
 
-    Entry& pte = getTable()[indexes.pte];
+    Table::Entry& pte = getTable()[indexes.pte];
     return &pte;
-}
-
-bool Paging::isPresent(uint32_t virtualAddress) {
-    auto pte = Table::Entry::get<true>(virtualAddress, false);
-    if (!pte)
-        return false;
-
-    return pte->is<Flags::PRESENT>();
 }
 
 template<bool isPagingEnabled>
@@ -117,11 +132,17 @@ bool Paging::modify(uint32_t virtualAddress, uint32_t physicalAddress, Paging::F
             return false;
 
         *pte = Table::Entry(); // empty entry (not present)
+
+        if (virtualAddress < firstFree)
+            firstFree = virtualAddress;
     } else {
         if (operation == UNMAP)
             return false;
 
         *pte = Table::Entry(physicalAddress, flags);
+
+        if (virtualAddress == firstFree + PAGE_SIZE)
+            firstFree += PAGE_SIZE;
     }
 
     x86::invlpg(virtualAddress); // flush virtual address in TLB
@@ -131,8 +152,6 @@ bool Paging::modify(uint32_t virtualAddress, uint32_t physicalAddress, Paging::F
 void Paging::identityMap(uint32_t startAddress, uint32_t endAddress, Paging::Flags flags) {
     for (size_t addr = startAddress; addr < endAddress; addr += PAGE_SIZE)
         modify<false>(addr, addr, flags | Flags::PRESENT);
-
-    VirtualAllocator::exclude(startAddress, endAddress - startAddress);
 }
 
 Paging::Table::Entry::Entry(uint32_t address, Flags flags) : value(0) {
@@ -146,7 +165,7 @@ constexpr bool Paging::Table::Entry::is() const {
 }
 
 Paging::Table::Entry* Paging::Table::allocate() {
-    return reinterpret_cast<Entry*>(PhysicalAllocator::allocate(1)); // allocate 1 page = entire page table
+    return PhysicalAllocator::allocate<Entry*>(1); // allocate 1 page = entire page table
 }
 
 void Paging::Table::init(Paging::Table::Entry* first) {
@@ -172,7 +191,7 @@ constexpr bool Paging::Directory::Entry::is() const {
 }
 
 Paging::Directory::Entry* Paging::Directory::allocate() {
-    return reinterpret_cast<Entry*>(PhysicalAllocator::allocate(1)); // allocate 1 page = entire directory
+    return PhysicalAllocator::allocate<Entry*>(1); // allocate 1 page = entire directory
 }
 
 void Paging::Directory::init(Paging::Directory::Entry* first) {

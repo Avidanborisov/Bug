@@ -6,6 +6,7 @@
 #include "support/memops.hpp"
 #include "assert.hpp"
 #include "math.hpp"
+#include "optional.hpp"
 
 template<class Unit = uint32_t>
 class Bitset {
@@ -66,7 +67,7 @@ public:
     }
 
     // return index of first n free bits
-    size_t findFree(size_t bits) const {
+    Optional<size_t> findFree(size_t bits) const {
         assert(bits <= size());
 
         for (size_t index = 0; index < size() - bits; ++index) {
@@ -74,7 +75,7 @@ public:
                 return index;
         }
 
-        Kernel::panic("Bitset: can't find %u free bits!", bits);
+        return { };
     }
 
 private:

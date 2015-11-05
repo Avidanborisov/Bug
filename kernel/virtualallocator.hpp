@@ -8,14 +8,23 @@
 
 class VirtualAllocator {
 public:
-    static void init();
-    static void exclude(uint32_t base, size_t length);
+    static Optional<uint32_t> allocate(size_t pages);
 
-    static uint32_t allocate(size_t pages);
-    static void free(uint32_t address, size_t pages);
+    template<class T>
+    static T allocate(size_t pages) {
+        auto address = allocate(pages);
+        if (!address)
+            return nullptr;
 
-private:
-    static Bitset<> pages;
+        return reinterpret_cast<T>(*address);
+    }
+
+    static bool free(uint32_t address, size_t pages);
+
+    template<class T>
+    static bool free(T* address, size_t pages) {
+        return free(reinterpret_cast<uint32_t>(address), pages);
+    }
 };
 
 #endif // VIRTUALALLOCATOR_HPP

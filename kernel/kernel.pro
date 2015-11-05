@@ -59,7 +59,8 @@ HEADERS += \
     containers/bitset.hpp \
     containers/array.hpp \
     support/memops.hpp \
-    virtualallocator.hpp
+    virtualallocator.hpp \
+    containers/optional.hpp
 
 # Global constructors support
 #

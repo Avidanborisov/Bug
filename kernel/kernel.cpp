@@ -8,6 +8,7 @@
 #include "physicalallocator.hpp"
 #include "virtualallocator.hpp"
 #include "paging.hpp"
+#include "containers/optional.hpp"
 
 void Kernel::main() {
     Timer::disable();
@@ -17,24 +18,10 @@ void Kernel::main() {
     Interrupts::init();
 
     MemoryMap::init();
-
     PhysicalAllocator::init();
-    VirtualAllocator::init();
-    PhysicalAllocator::finalize();
-
     Paging::init();
-    Console::printf("Paging initialized!\n");
-
-    // make sure mapping works: map some virtual address to the video framebuffer
-    Console::printf("%t\n", Paging::map(0x100000, 0xb8000));
-    Console::printf("%t\n", Paging::map(0xff000, 0xb8000, 2));
-    *(int *)0x100008 = 0xffffffff;
-    Console::printf("%t\n", Paging::map(0x1000000, 0xb8000));
-    *(int *)0x1000016 = 0xffffffff;
-    Console::printf("%t\n", Paging::unmap(0x1000000));
-
-    // page fault!
-    // *(int *)0x1000000 = 0xffffffff;
+    auto ptr = VirtualAllocator::allocate<void*>(5);
+    Console::printf("%p\n", ptr);
 }
 
 void Kernel::panic(const char* msg, ...) {

@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "containers/optional.hpp"
 #include "math.hpp"
 
 class Paging {
@@ -38,13 +39,27 @@ public:
         NONE           = 0x00,
         PRESENT        = 0x01, // table/directory entry is present
         WRITE          = 0x02, // writes are allowed to the area referenced by the table/directory entry
-        USER           = 0x04, // user-mode access is allowed to the area reference by the table/directory entry
+        USER           = 0x04, // user-mode access is allowed to the area referenced by the table/directory entry
         WRITE_THROUGH  = 0x08,
         CACHE_DISABLED = 0x10,
-        ACCESSED       = 0x20, // indicates whether software has accessed the area reference by the table/directory entry
+        ACCESSED       = 0x20, // indicates whether software has accessed the area referenced by the table/directory entry
     };
 
     static void init();
+
+    static bool isMapped(uint32_t virtualAddress);
+    static bool isMapped(uint32_t virtualAddress, size_t pages);
+
+    static Optional<uint32_t> findFree(size_t pages);
+
+    template<class T>
+    static T findFree(size_t pages) {
+        auto virtualAddress = findFree(pages);
+        if (!virtualAddress)
+            return nullptr;
+
+        return reinterpret_cast<T>(*virtualAddress);
+    }
 
     static bool map(uint32_t virtualAddress, uint32_t physicalAddress, Flags flags = Flags::NONE);
     static bool map(uint32_t virtualAddress, uint32_t physicalAddress, size_t pages, Flags flags = Flags::NONE);
@@ -54,7 +69,7 @@ public:
 
 private:
     struct Indexes {
-        uint32_t pde, pte;
+        size_t pde, pte;
     };
 
     static Indexes parseAddress(uint32_t virtualAddress);
@@ -113,6 +128,7 @@ private:
     static_assert(sizeof(Directory::Entry) * ENTRIES == PAGE_SIZE, "Page Directory takes whole page");
 
     static Directory::Entry* directory;
+    static uint32_t firstFree;
 
     static constexpr auto VIRTUAL_DIRECTORY = reinterpret_cast<Directory::Entry*>(0xfffff000);
     static constexpr auto VIRTUAL_TABLES    = reinterpret_cast<Table::Entry*>(0xffc00000);

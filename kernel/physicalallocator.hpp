@@ -12,14 +12,23 @@ public:
     static uint32_t getKernelEnd();
 
     static void init();
-    static void finalize();
 
     static uint32_t allocate(size_t pages);
     static void free(uint32_t address, size_t pages);
 
+    template<class T>
+    static T allocate(size_t pages) {
+        return reinterpret_cast<T>(allocate(pages));
+    }
+
+    template<class T>
+    static void free(T* address, size_t pages) {
+        free(reinterpret_cast<uint32_t>(address), pages);
+    }
+
 private:
     static uint32_t kernelEnd;
-    static bool finalized;
+    static bool initialized;
 
     static Bitset<> memory;
 };

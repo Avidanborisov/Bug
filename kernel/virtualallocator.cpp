@@ -2,26 +2,27 @@
 #include "physicalallocator.hpp"
 #include "memorymap.hpp"
 
-Bitset<> VirtualAllocator::pages;
+Optional<uint32_t> VirtualAllocator::allocate(size_t pages) {
+    auto virt = Paging::findFree(pages);
+    if (!virt)
+        return { };
 
-void VirtualAllocator::init() {
-    constexpr auto PAGES = MemoryMap::MAX_MEMORY / Paging::PAGE_SIZE;
-    pages.init(PAGES, Paging::PAGE_SIZE, PhysicalAllocator::reserve);
+    for (size_t page = 0; page < pages; ++page) {
+        auto phys = PhysicalAllocator::allocate(1);
+
+        if (!Paging::map(*virt + page * Paging::PAGE_SIZE, phys)) {
+            while (page-- > 0)
+                Paging::unmap(*virt + page * Paging::PAGE_SIZE);
+
+            return { };
+        }
+
+    }
+
+    return virt;
 }
 
-void VirtualAllocator::exclude(uint32_t base, size_t length) {
-    assert(Paging::isAligned(base) && Paging::isAligned(length));
-    pages.set(base / Paging::PAGE_SIZE, length / Paging::PAGE_SIZE);
-}
-
-uint32_t VirtualAllocator::allocate(size_t blocks) {
-    uint32_t page = pages.findFree(blocks);
-    pages.set(page, blocks);
-    return page * Paging::PAGE_SIZE;
-}
-
-void VirtualAllocator::free(uint32_t address, size_t blocks) {
-    assert(Paging::isAligned(address));
-    pages.clear(address / Paging::PAGE_SIZE, blocks);
+bool VirtualAllocator::free(uint32_t address, size_t blocks) {
+    return Paging::unmap(address, blocks);
 }
 

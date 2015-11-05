@@ -18,6 +18,7 @@ QMAKE_EXTRA_TARGETS = image first
 OTHER_FILES += \
     README.md \
     .gitignore \
+    docs/specification.docx \
     scripts/install-build-tools.sh \
     scripts/build-image.sh \
     scripts/run-qemu.sh \

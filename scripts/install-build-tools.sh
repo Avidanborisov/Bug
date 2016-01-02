@@ -10,7 +10,10 @@ export PREFIX="/opt/cross"
 export TARGET=i686-elf
 export PATH="$PREFIX/bin:$PATH"
 
-sudo apt-get install libmpfr-dev libmpc-dev texinfo mtools genisoimage
+mkdir build
+cd build
+
+sudo apt-get install libmpfr-dev libmpc-dev texinfo mtools genisoimage qtcreator qemu
 wget ftp://ftp.gnu.org/gnu/binutils/binutils-$BINUTILS_VER.tar.gz
 wget ftp://ftp.gnu.org/gnu/gcc/gcc-$GCC_VER/gcc-$GCC_VER.tar.gz
 
@@ -33,6 +36,9 @@ sudo make install-gcc
 sudo make install-target-libgcc
 cd ..
 
+cd ..
+rm -rf build
+
 # Update PATH
 cat <<EOF >> ~/.profile
 
@@ -40,4 +46,7 @@ cat <<EOF >> ~/.profile
 if [ -d "$PREFIX/bin" ] ; then
     export PATH="$PREFIX/bin:\$PATH"
 fi
+
+echo "Re-login to apply PATH modification.."
+
 EOF

@@ -8,9 +8,10 @@ QMAKE_CC   = i686-elf-gcc
 QMAKE_CXX  = i686-elf-g++
 OBJCOPY    = i686-elf-objcopy
 
-QMAKE_CFLAGS    = -ffreestanding
-QMAKE_LFLAGS    = -T $$PWD/bootloader.ld -ffreestanding -nostdlib
-QMAKE_POST_LINK = $$OBJCOPY -O binary $$OUT_PWD/bootloader $$OUT_PWD/bootloader.bin
+QMAKE_CFLAGS     = -ffreestanding
+QMAKE_CFLAGS_APP =
+QMAKE_LFLAGS     = -T $$PWD/bootloader.ld -ffreestanding -nostdlib
+QMAKE_POST_LINK  = $$OBJCOPY -O binary $$OUT_PWD/bootloader $$OUT_PWD/bootloader.bin
 
 SOURCES += \
     boot.S \

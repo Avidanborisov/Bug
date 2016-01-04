@@ -46,7 +46,6 @@ cat <<EOF >> ~/.profile
 if [ -d "$PREFIX/bin" ] ; then
     export PATH="$PREFIX/bin:\$PATH"
 fi
+EOF
 
 echo "Re-login to apply PATH modification.."
-
-EOF

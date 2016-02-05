@@ -8,7 +8,6 @@
 #include "physicalallocator.hpp"
 #include "virtualallocator.hpp"
 #include "paging.hpp"
-#include "containers/optional.hpp"
 
 void Kernel::main() {
     Timer::disable();
@@ -20,8 +19,10 @@ void Kernel::main() {
     MemoryMap::init();
     PhysicalAllocator::init();
     Paging::init();
-    auto ptr = VirtualAllocator::allocate<void*>(5);
-    Console::printf("%p\n", ptr);
+
+    auto n = new int;
+    Console::printf("%p\n", n);
+    delete n;
 }
 
 void Kernel::panic(const char* msg, ...) {

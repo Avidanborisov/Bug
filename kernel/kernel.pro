@@ -37,7 +37,8 @@ SOURCES += \
     paging.cpp \
     physicalallocator.cpp \
     support/memops.cpp \
-    virtualallocator.cpp
+    virtualallocator.cpp \
+    heap.cpp
 
 HEADERS += \
     boot/bios.hpp \
@@ -63,7 +64,8 @@ HEADERS += \
     containers/array.hpp \
     support/memops.hpp \
     virtualallocator.hpp \
-    containers/optional.hpp
+    containers/optional.hpp \
+    heap.hpp
 
 # Global constructors support
 #

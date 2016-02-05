@@ -64,8 +64,28 @@ public:
     static bool map(uint32_t virtualAddress, uint32_t physicalAddress, Flags flags = Flags::NONE);
     static bool map(uint32_t virtualAddress, uint32_t physicalAddress, size_t pages, Flags flags = Flags::NONE);
 
+    template<class T, class U>
+    static bool map(T* virtualAddress, U* physicalAddress, Flags flags = Flags::NONE) {
+        return map(reinterpret_cast<uint32_t>(virtualAddress), reinterpret_cast<uint32_t>(physicalAddress), flags);
+    }
+
+    template<class T, class U>
+    static bool map(T* virtualAddress, U* physicalAddress, size_t pages, Flags flags = Flags::NONE) {
+        return map(reinterpret_cast<uint32_t>(virtualAddress), reinterpret_cast<uint32_t>(physicalAddress), pages, flags);
+    }
+
     static bool unmap(uint32_t virtualAddress);
     static bool unmap(uint32_t virtualAddress, size_t pages);
+
+    template<class T>
+    static bool unmap(T* virtualAddress) {
+        return unmap(reinterpret_cast<uint32_t>(virtualAddress));
+    }
+
+    template<class T>
+    static bool unmap(T* virtualAddress, size_t pages) {
+        return unmap(reinterpret_cast<uint32_t>(virtualAddress), pages);
+    }
 
 private:
     struct Indexes {

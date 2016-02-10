@@ -38,7 +38,8 @@ SOURCES += \
     physicalallocator.cpp \
     support/memops.cpp \
     virtualallocator.cpp \
-    heap.cpp
+    heap.cpp \
+    string.cpp
 
 HEADERS += \
     boot/bios.hpp \
@@ -54,7 +55,6 @@ HEADERS += \
     irq.hpp \
     interrupts.hpp \
     timer.hpp \
-    sort.hpp \
     memorymap.hpp \
     assert.hpp \
     math.hpp \
@@ -65,7 +65,10 @@ HEADERS += \
     support/memops.hpp \
     virtualallocator.hpp \
     containers/optional.hpp \
-    heap.hpp
+    heap.hpp \
+    string.hpp \
+    utility.hpp \
+    containers/uniquepointer.hpp
 
 # Global constructors support
 #

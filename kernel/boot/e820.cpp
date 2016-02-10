@@ -1,6 +1,6 @@
 #include "e820.hpp"
 #include "bios.hpp"
-#include "sort.hpp"
+#include "utility.hpp"
 #include "console.hpp"
 #include "framebuffer.hpp"
 
@@ -53,7 +53,7 @@ void E820::sanitizeMap() {
         }
     }
 
-    sort(changePoints.data(), changePoints.size(), [](const auto& p1, const auto& p2) {
+    util::sort(changePoints.data(), changePoints.size(), [](const auto& p1, const auto& p2) {
         if (p1.addr == p2.addr)
             return p1.addr == p1.entry->base;
 

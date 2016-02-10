@@ -8,6 +8,13 @@
 #include "physicalallocator.hpp"
 #include "virtualallocator.hpp"
 #include "paging.hpp"
+#include "containers/uniquepointer.hpp"
+
+class Test {
+public:
+    Test() { Console::printf("constructed!\n"); }
+    ~Test() { Console::printf("destructed!\n"); }
+};
 
 void Kernel::main() {
     Timer::disable();
@@ -20,9 +27,7 @@ void Kernel::main() {
     PhysicalAllocator::init();
     Paging::init();
 
-    auto n = new int;
-    Console::printf("%p\n", n);
-    delete n;
+    UniquePointer<Test> p(new Test);
 }
 
 void Kernel::panic(const char* msg, ...) {

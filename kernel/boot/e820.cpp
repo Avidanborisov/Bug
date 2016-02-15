@@ -6,8 +6,8 @@
 
 asm(".code16gcc");
 
-E820::Entry E820::entries[E820::MAX_ENTRIES];
-uint16_t E820::count;
+E820::Entry E820::entries[E820::MAX_ENTRIES] [[gnu::section(".data16")]];
+uint16_t E820::count                         [[gnu::section(".data16")]];
 
 void E820::detectMemory() {
     uint32_t continuationID = 0;
@@ -53,7 +53,7 @@ void E820::sanitizeMap() {
         }
     }
 
-    util::sort(changePoints.data(), changePoints.size(), [](const auto& p1, const auto& p2) {
+    Util::sort(changePoints.data(), changePoints.size(), [](const auto& p1, const auto& p2) {
         if (p1.addr == p2.addr)
             return p1.addr == p1.entry->base;
 

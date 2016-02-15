@@ -29,7 +29,6 @@ public:
     static const Entry* isInHole(uint32_t base, uint32_t length);
 
 private:
-    static uint32_t start;
     static uint32_t end;
     static HoleList holes;
 };

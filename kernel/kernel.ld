@@ -7,8 +7,12 @@ SECTIONS {
      */
     . = 0x9000;
 
-    .text : {
+    .boot : {
         *(.entry)
+        *(.data16)
+    }
+
+    .text : {
         *(.text)
     }
 

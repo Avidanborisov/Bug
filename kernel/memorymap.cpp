@@ -3,7 +3,6 @@
 #include "console.hpp"
 #include "paging.hpp"
 
-uint32_t MemoryMap::start;
 uint32_t MemoryMap::end;
 MemoryMap::HoleList MemoryMap::holes;
 

@@ -62,7 +62,7 @@ protectedMode:
     mov fs, ax
     mov gs, ax
 
-    mov esp, offset entry # the stack grows downwords from the starting address of the kernel
+    mov esp, offset .entry # the stack grows downwords from the starting address of the kernel
     call _init
     call kmain
 
@@ -70,7 +70,7 @@ spin: # infinite loop
     hlt
     jmp spin
 
-.section .rodata
+.section .data16
 
 /**
  * The bootstrap GDT (global descriptor table) used to enter protected mode.

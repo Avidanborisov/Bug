@@ -12,7 +12,11 @@ void Console::print(char c, Console::Color fg, Console::Color bg) {
 
 void Console::print(const char* s, Console::Color fg, Console::Color bg) {
     while (*s != '\0')
-        Framebuffer::putchar(*s++, fg, bg);
+        print(*s++, fg, bg);
+}
+
+void Console::print(const String& s, Console::Color fg, Console::Color bg) {
+    print(s.data(), fg, bg);
 }
 
 void Console::print(bool b, Console::Color fg, Console::Color bg) {
@@ -59,19 +63,19 @@ void Console::print(int num, int base, int minWidth, bool zeroPad, Console::Colo
     print(static_cast<int32_t>(num), base, minWidth, zeroPad, fg, bg);
 }
 
-void Console::printf(const char* fmt, ...) {
+void Console::printfImpl(const char* fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     vprintf(Color::WHITE, Color::BLACK, fmt, ap);
 }
 
-void Console::printf(Color fg, const char* fmt, ...) {
+void Console::printfImpl(Color fg, const char* fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     vprintf(fg, Color::BLACK, fmt, ap);
 }
 
-void Console::printf(Color fg, Color bg, const char* fmt, ...) {
+void Console::printfImpl(Color fg, Color bg, const char* fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     vprintf(fg, bg, fmt, ap);

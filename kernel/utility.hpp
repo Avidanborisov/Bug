@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-namespace util {
+namespace Util {
     template<class T>
     struct remove_reference {
         typedef T type;
@@ -51,6 +51,16 @@ namespace util {
     template<class T, size_t N, class Compare>
     void sort(T (&arr)[N], Compare cmp) {
         sort(arr, N, cmp);
+    }
+
+    template<class T>
+    constexpr const T& min(const T& a, const T& b) {
+        return a < b ? a : b;
+    }
+
+    template<class T>
+    constexpr const T& max(const T& a, const T& b) {
+        return a > b ? a : b;
     }
 }
 

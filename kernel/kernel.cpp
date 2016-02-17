@@ -8,13 +8,8 @@
 #include "physicalallocator.hpp"
 #include "virtualallocator.hpp"
 #include "paging.hpp"
-#include "containers/uniquepointer.hpp"
-
-class Test {
-public:
-    Test() { Console::printf("constructed!\n"); }
-    ~Test() { Console::printf("destructed!\n"); }
-};
+#include "string.hpp"
+#include "utility.hpp"
 
 void Kernel::main() {
     Timer::disable();
@@ -27,7 +22,15 @@ void Kernel::main() {
     PhysicalAllocator::init();
     Paging::init();
 
-    UniquePointer<Test> p(new Test);
+    String s = "hello";
+    Console::print(s + '\n');
+    s += " world! yeah!!!!!!";
+    Console::printf(Console::Color::RED, "%s\n", s);
+    Console::printf("%s\n", "abcd: " + s + '%');
+
+    auto copy = Util::move(s);
+    Console::printf("%s\n", copy);
+    Console::printf("%s\n", s);
 }
 
 void Kernel::panic(const char* msg, ...) {

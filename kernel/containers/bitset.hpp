@@ -15,6 +15,7 @@ public:
 
     template<class StaticAllocator>
     void init(size_t size, size_t allocBlockSize, StaticAllocator alloc) {
+        assert(size != 0);
         units = Math::divRoundUp(size, BITS_PER_UNIT);
         auto blocks = Math::divRoundUp(units * sizeof(Unit), allocBlockSize);
 

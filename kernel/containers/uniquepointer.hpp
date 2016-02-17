@@ -24,12 +24,44 @@ class DefaultDeleter<T[]> {
     }
 };
 
-template<class T, class Deleter = DefaultDeleter<T> >
-class UniquePointer {
-private:
-    T* ptr = nullptr;
-    Deleter deleter { };
+/*
+ * UniquePointer members are stored in this seperate class in order to employ
+ * empty base class optimization for the deleter object (so that empty deleters
+ * have no memory overhead).
+ */
+template<class T, class Deleter, bool = __is_empty(Deleter) && !__is_final(Deleter)>
+class UniquePointerData : private Deleter {
+public:
+    UniquePointerData(T* ptr, Deleter deleter) : Deleter(deleter), pointer(ptr) { }
 
+    T*& ptr()                      { return pointer; }
+    const T*& ptr() const          { return pointer; }
+
+    Deleter& deleter()             { return *this; }
+    const Deleter& deleter() const { return *this; }
+
+private:
+    T* pointer;
+};
+
+template<class T, class Deleter>
+class UniquePointerData<T, Deleter, false> {
+public:
+    UniquePointerData(T* ptr, Deleter deleter) : pointer(ptr), del(deleter) { }
+
+    T*& ptr()                      { return pointer; }
+    const T*& ptr() const          { return pointer; }
+
+    Deleter& deleter()             { return del; }
+    const Deleter& deleter() const { return del; }
+
+private:
+    T* pointer;
+    Deleter del;
+};
+
+template<class T, class Deleter = DefaultDeleter<T>>
+class UniquePointer {
 public:
     UniquePointer() = default;
     UniquePointer(decltype(nullptr)) : UniquePointer() { }
@@ -37,7 +69,7 @@ public:
     UniquePointer(const UniquePointer&) = delete;
     UniquePointer& operator=(const UniquePointer&) = delete;
 
-    explicit UniquePointer(T* ptr) : ptr(ptr), deleter(){ }
+    explicit UniquePointer(T* ptr) : data(ptr, Deleter()) { }
 
     ~UniquePointer() {
         reset();
@@ -48,50 +80,49 @@ public:
         return *this;
     }
 
-    UniquePointer(UniquePointer&& other) : ptr(other.release()), deleter(other.deleter) { }
+    UniquePointer(UniquePointer&& other) : data(other.release(), other.data.deleter()) { }
 
     UniquePointer& operator=(UniquePointer&& other) {
         reset(other.release());
-        deleter = other.deleter;
+        data.deleter() = other.data.deleter();
         return *this;
     }
 
     T* release() {
-        T* p = ptr;
-        ptr = nullptr;
-        return p;
+        T* ptr = data.ptr();
+        data.ptr() = nullptr;
+        return ptr;
     }
 
-    void reset(T* p = nullptr) {
-        if (ptr != nullptr)
-            deleter(ptr);
+    void reset(T* ptr = nullptr) {
+        if (data.ptr() != nullptr)
+            data.deleter()(data.ptr());
 
-        ptr = p;
+        data.ptr() = ptr;
     }
 
     T* get() const {
-        return ptr;
+        return data.ptr();
     }
 
     T& operator*() const {
-        return *ptr;
+        return *data.ptr();
     }
 
     T* operator->() const {
-        return ptr;
+        return data.ptr();
     }
 
     explicit operator bool() const {
-        return ptr == nullptr ? false : true;
+        return data.ptr() == nullptr ? false : true;
     }
+
+private:
+    UniquePointerData<T, Deleter> data { nullptr, { } };
 };
 
 template<class T, class Deleter>
 class UniquePointer<T[], Deleter> {
-private:
-    T* ptr = nullptr;
-    Deleter deleter { };
-
 public:
     UniquePointer() = default;
     UniquePointer(decltype(nullptr)) : UniquePointer() { }
@@ -99,7 +130,7 @@ public:
     UniquePointer(const UniquePointer&) = delete;
     UniquePointer& operator=(const UniquePointer&) = delete;
 
-    explicit UniquePointer(T* ptr) : ptr(ptr), deleter(){ }
+    explicit UniquePointer(T* ptr) : data(ptr, Deleter()) { }
 
     ~UniquePointer() {
         reset();
@@ -110,40 +141,44 @@ public:
         return *this;
     }
 
-    UniquePointer(UniquePointer&& other) : ptr(other.release()), deleter(other.deleter) { }
+    UniquePointer(UniquePointer&& other) : data(other.release(), other.data.deleter()) { }
 
     UniquePointer& operator=(UniquePointer&& other) {
         reset(other.release());
-        deleter = other.deleter;
+        data.deleter() = other.data.deleter();
         return *this;
     }
 
     T* release() {
-        T* p = ptr;
-        ptr = nullptr;
-        return p;
-    }
-
-    void reset(T* p = nullptr) {
-        if (ptr != nullptr)
-            deleter(ptr);
-
-        ptr = p;
-    }
-
-    T* get() const {
+        T* ptr = data.ptr();
+        data.ptr() = nullptr;
         return ptr;
     }
 
+    void reset(T* ptr = nullptr) {
+        if (data.ptr() != nullptr)
+            deleter(data.ptr());
+
+        data.ptr() = ptr;
+    }
+
+    T* get() const {
+        return data.ptr();
+    }
+
     T& operator[](size_t i) const {
-        return ptr[i];
+        return data.ptr()[i];
     }
 
     explicit operator bool() const {
-        return ptr == nullptr ? false : true;
+        return data.ptr() == nullptr ? false : true;
     }
+
+private:
+    UniquePointerData<T, Deleter> data { nullptr, { } };
 };
 
-static_assert(sizeof(UniquePointer<int>) == sizeof(int*), "UniquePointer with DefaultDeleter has no overhead");
+static_assert(sizeof(UniquePointer<int>)   == sizeof(int*), "UniquePointer with DefaultDeleter has no overhead");
+static_assert(sizeof(UniquePointer<int[]>) == sizeof(int*), "UniquePointer with DefaultDeleter has no overhead");
 
 #endif // UNIQUEPOINTER_HPP

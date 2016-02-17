@@ -68,7 +68,8 @@ HEADERS += \
     heap.hpp \
     string.hpp \
     utility.hpp \
-    containers/uniquepointer.hpp
+    containers/uniquepointer.hpp \
+    support/new.hpp
 
 # Global constructors support
 #

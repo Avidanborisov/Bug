@@ -4,7 +4,7 @@
 #include "memorymap.hpp"
 
 extern uint32_t kernelEnd;
-uint32_t PhysicalAllocator::kernelEnd = Paging::alignUp(&kernelEnd);
+uint32_t PhysicalAllocator::kernelEnd = Paging::alignUp(&::kernelEnd);
 bool PhysicalAllocator::initialized = false;
 
 Bitset<> PhysicalAllocator::memory;

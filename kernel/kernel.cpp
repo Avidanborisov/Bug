@@ -10,6 +10,48 @@
 #include "paging.hpp"
 #include "string.hpp"
 #include "utility.hpp"
+#include "heap.hpp"
+#include "containers/uniquepointer.hpp"
+#include "containers/vector.hpp"
+
+struct Test {
+    String value;
+
+    Test() {
+        Console::print("Test()\n");
+    }
+
+    Test(const char* value) : Test(String(value)) { }
+
+    Test(const String& value) : value(value) {
+        Console::printf("Test(%s)\n", value);
+    }
+
+    Test(Test const& other) noexcept : value(other.value) {
+        Console::printf("Test(Test(%s))\n", value);
+    }
+
+    Test& operator=(const Test& other) {
+        value = other.value;
+        Console::printf("Test = Test(%s))\n", value);
+        return *this;
+    }
+
+    Test& operator=(Test&& other) {
+        value = Util::move(other.value);
+        Console::printf("Test = move(Test(%s))\n", value);
+        return *this;
+    }
+
+    Test(Test&& other) noexcept : value(Util::move(other.value)) {
+        Console::printf("Test(move(Test(%s)))\n", value);
+    }
+
+    ~Test() {
+        if (!value.empty())
+            Console::printf("~Test(%s)\n", value);
+    }
+};
 
 void Kernel::main() {
     Timer::disable();
@@ -22,15 +64,21 @@ void Kernel::main() {
     PhysicalAllocator::init();
     Paging::init();
 
-    String s = "hello";
-    Console::print(s + '\n');
-    s += " world! yeah!!!!!!";
-    Console::printf(Console::Color::RED, "%s\n", s);
-    Console::printf("%s\n", "abcd: " + s + '%');
+    Vector<Test> d { "Hello", "Man" };
+    d.resize(4);
+    Vector<Test> f = d;
+    f = { "asdf", "dig", "one", "two", "three", "four" };
+    f.insert(1, {"asdfasdf", "ASdgaerg", "Asd"});
+    f.insert(8, {"kklo", "ds"});
 
-    auto copy = Util::move(s);
-    Console::printf("%s\n", copy);
-    Console::printf("%s\n", s);
+    for (const auto& x : f)
+        Console::printf("%s ", x.value);
+    Console::print('\n');
+
+    Vector<UniquePointer<Test>> p;
+    p.add(new Test("dyn"));
+    p.reserve(10);
+    p.resize(3);
 }
 
 void Kernel::panic(const char* msg, ...) {

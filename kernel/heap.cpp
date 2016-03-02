@@ -75,6 +75,9 @@ void* Heap::allocate(size_t size) {
 }
 
 void Heap::free(void* ptr) {
+    if (ptr == nullptr)
+        return;
+
     Header* header = Header::meta(ptr);
     Header* node = head;
 

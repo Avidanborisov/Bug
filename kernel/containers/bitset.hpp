@@ -38,7 +38,7 @@ public:
 
     // set all bits
     void set() {
-        memset(arr, 1, units * sizeof(Unit));
+        memset(arr, -1, units * sizeof(Unit));
     }
 
     // clear n bits

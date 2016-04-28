@@ -11,6 +11,7 @@ public:
     static void free(void* ptr);
 
 private:
+    static constexpr size_t PAGE_SIZE = 4096;
     static constexpr size_t ALIGNMENT = 16;
 
     union Header {

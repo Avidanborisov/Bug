@@ -3,18 +3,26 @@ CONFIG += console
 CONFIG -= app_bundle
 CONFIG -= qt
 
-QMAKE_LINK = i686-elf-g++
-QMAKE_CC   = i686-elf-gcc
-QMAKE_CXX  = i686-elf-g++
-OBJCOPY    = i686-elf-objcopy
-
-QMAKE_CFLAGS       = -ffreestanding -Wall -Wextra -masm=intel
-QMAKE_CXXFLAGS     = $$QMAKE_CFLAGS -std=c++14 -fno-exceptions -fno-rtti
-QMAKE_CFLAGS_APP   =
-QMAKE_CXXFLAGS_APP =
+include(../build.pri)
 
 QMAKE_LFLAGS    = -T $$PWD/kernel.ld -ffreestanding -nostdlib -lgcc
 QMAKE_POST_LINK = $$OBJCOPY -O binary --set-section-flags .bss=alloc,load,contents $$OUT_PWD/kernel $$OUT_PWD/kernel.bin
+
+# Import and link Bug's stdlib
+LIBS += -L$$OUT_PWD/../stdlib/ -lstdlib
+INCLUDEPATH += $$PWD/../stdlib
+DEPENDPATH += $$PWD/../stdlib
+PRE_TARGETDEPS += $$OUT_PWD/../stdlib/libstdlib.a
+
+# Link all user program executables (data objects generated from elf executables)
+LIBS += $$OUT_PWD/../programs/shell/shell.o
+
+# Force link each time to get updated programs objects
+forcelink.target = forcelink
+forcelink.commands =
+forcelink.depends =
+QMAKE_EXTRA_TARGETS += forcelink
+PRE_TARGETDEPS = forcelink
 
 SOURCES += \
     boot/entry.S \
@@ -23,7 +31,6 @@ SOURCES += \
     x86.S \
     kernel.cpp \
     framebuffer.cpp \
-    console.cpp \
     gdt.cpp \
     idt.cpp \
     context.S \
@@ -36,10 +43,13 @@ SOURCES += \
     memorymap.cpp \
     paging.cpp \
     physicalallocator.cpp \
-    support/memops.cpp \
     virtualallocator.cpp \
-    heap.cpp \
-    string.cpp
+    tss.cpp \
+    scheduler.cpp \
+    task.S \
+    programs.cpp \
+    syscalls.cpp \
+    terminal.cpp
 
 HEADERS += \
     boot/bios.hpp \
@@ -47,7 +57,6 @@ HEADERS += \
     kernel.hpp \
     framebuffer.hpp \
     x86.hpp \
-    console.hpp \
     gdt.hpp \
     idt.hpp \
     context.hpp \
@@ -60,17 +69,15 @@ HEADERS += \
     math.hpp \
     paging.hpp \
     physicalallocator.hpp \
-    containers/bitset.hpp \
-    containers/array.hpp \
-    support/memops.hpp \
     virtualallocator.hpp \
-    containers/optional.hpp \
-    heap.hpp \
-    string.hpp \
-    utility.hpp \
-    containers/uniquepointer.hpp \
-    support/new.hpp \
-    containers/vector.hpp
+    tss.hpp \
+    scheduler.hpp \
+    programs.hpp \
+    elf.hpp \
+    task.h \
+    syscalls.hpp \
+    mappedpointer.hpp \
+    terminal.hpp
 
 # Global constructors support
 #
@@ -87,4 +94,4 @@ LIBS         += $$CRTEND $$CRTN   # These objects appear at the end of the link 
 OTHER_FILES += \
     kernel.ld \
     support/crti.S \
-    support/crtn.S
+    support/crtn.S \

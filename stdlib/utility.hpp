@@ -2,8 +2,8 @@
 #define SORT_HPP
 
 #include <stddef.h>
-#include "support/new.hpp"
 #include "assert.hpp"
+#include "new.hpp"
 
 namespace std { // initializer_list required to be part of std namespace for compiler integration
     template<class T>

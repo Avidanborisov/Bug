@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <stdarg.h>
-#include "framebuffer.hpp"
 #include "string.hpp"
 
 namespace Detail {
@@ -30,9 +29,26 @@ namespace Detail {
 
 class Console {
 public:
-    using Color = Framebuffer::Color;
+    enum class Color {
+        BLACK         = 0,
+        BLUE          = 1,
+        GREEN         = 2,
+        CYAN          = 3,
+        RED           = 4,
+        MAGENTA       = 5,
+        BROWN         = 6,
+        LIGHT_GREY    = 7,
+        DARK_GREY     = 8,
+        LIGHT_BLUE    = 9,
+        LIGHT_GREEN   = 10,
+        LIGHT_CYAN    = 11,
+        LIGHT_RED     = 12,
+        LIGHT_MAGENTA = 13,
+        YELLOW        = 14,
+        WHITE         = 15,
+    };
 
-    static void init();
+    static void clear();
 
     static void print(char c,          Color fg = Color::WHITE, Color bg = Color::BLACK);
     static void print(const char* s,   Color fg = Color::WHITE, Color bg = Color::BLACK);
@@ -44,7 +60,7 @@ public:
     static void print(const void*,  int base = 16, int minWidth = 0, bool zeroPad = false, Color fg = Color::WHITE, Color bg = Color::BLACK);
 
     static void print(unsigned num, int base = 10, int minWidth = 0, bool zeroPad = false, Color fg = Color::WHITE, Color bg = Color::BLACK);
-    static void print(int      num, int base = 10, int minWidth = 0, bool zeroPad = false, Color fg = Color::WHITE, Color bg = Color::BLACK);    
+    static void print(int      num, int base = 10, int minWidth = 0, bool zeroPad = false, Color fg = Color::WHITE, Color bg = Color::BLACK);
 
     static void vprintf(Color fg, const char* fmt, va_list ap);
     static void vprintf(Color fg, Color bg, const char* fmt, va_list ap);

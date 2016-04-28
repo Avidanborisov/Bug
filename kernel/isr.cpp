@@ -2,6 +2,8 @@
 #include "idt.hpp"
 #include "assert.hpp"
 #include "console.hpp"
+#include "syscalls.hpp"
+#include "kernel.hpp"
 
 extern "C" void  isr0(void);
 extern "C" void  isr1(void);
@@ -36,7 +38,9 @@ extern "C" void isr29(void);
 extern "C" void isr30(void);
 extern "C" void isr31(void);
 
-ISR::Handler* ISR::handlers[ISR::NUM_HANDLERS] = { nullptr };
+extern "C" void isr80(void);
+
+ISR::Handler* ISR::handlers[ISR::NUM_EXCEPTIONS] = { nullptr };
 
 void ISR::init() {
     IDT::setEntry(0 , isr0);
@@ -71,16 +75,23 @@ void ISR::init() {
     IDT::setEntry(29, isr29);
     IDT::setEntry(30, isr30);
     IDT::setEntry(31, isr31);
+
+    IDT::setEntry(80, isr80, 3); // syscall handler
 }
 
 void ISR::handle(uint8_t num, ISR::Handler* handler) {
-    assert(num < NUM_HANDLERS);
+    assert(num < NUM_EXCEPTIONS);
     handlers[num] = handler;
 }
 
-void ISR::commonHandler(const Context::Registers& regs) {
+void ISR::commonHandler(Context::Registers& regs) {
+    if (regs.intNum == SYSCALL_HANDLER) {
+        Syscalls::handle(regs);
+        return;
+    }
+
     if (handlers[regs.intNum])
         handlers[regs.intNum](regs);
     else
-        Console::printf("Unhandled interrupt: %d\n", regs.intNum);
+        Kernel::panic("Unhandled interrupt: %d\n", regs.intNum);
 }

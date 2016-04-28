@@ -6,57 +6,21 @@
 #include "memorymap.hpp"
 #include "x86.hpp"
 #include "physicalallocator.hpp"
-#include "virtualallocator.hpp"
 #include "paging.hpp"
 #include "string.hpp"
 #include "utility.hpp"
 #include "heap.hpp"
-#include "containers/uniquepointer.hpp"
-#include "containers/vector.hpp"
-
-struct Test {
-    String value;
-
-    Test() {
-        Console::print("Test()\n");
-    }
-
-    Test(const char* value) : Test(String(value)) { }
-
-    Test(const String& value) : value(value) {
-        Console::printf("Test(%s)\n", value);
-    }
-
-    Test(Test const& other) noexcept : value(other.value) {
-        Console::printf("Test(Test(%s))\n", value);
-    }
-
-    Test& operator=(const Test& other) {
-        value = other.value;
-        Console::printf("Test = Test(%s))\n", value);
-        return *this;
-    }
-
-    Test& operator=(Test&& other) {
-        value = Util::move(other.value);
-        Console::printf("Test = move(Test(%s))\n", value);
-        return *this;
-    }
-
-    Test(Test&& other) noexcept : value(Util::move(other.value)) {
-        Console::printf("Test(move(Test(%s)))\n", value);
-    }
-
-    ~Test() {
-        if (!value.empty())
-            Console::printf("~Test(%s)\n", value);
-    }
-};
+#include "scheduler.hpp"
+#include "isr.hpp"
+#include "irq.hpp"
+#include "terminal.hpp"
 
 void Kernel::main() {
     Timer::disable();
 
-    Console::init();
+    Console::clear();
+    Console::print("                            Welcome to Bug OS!\n", Console::Color::CYAN);
+
     GDT::init();
     Interrupts::init();
 
@@ -64,21 +28,53 @@ void Kernel::main() {
     PhysicalAllocator::init();
     Paging::init();
 
-    Vector<Test> d { "Hello", "Man" };
-    d.resize(4);
-    Vector<Test> f = d;
-    f = { "asdf", "dig", "one", "two", "three", "four" };
-    f.insert(1, {"asdfasdf", "ASdgaerg", "Asd"});
-    f.insert(8, {"kklo", "ds"});
+    Console::printf("%x\n", PhysicalAllocator::getKernelEnd());
 
-    for (const auto& x : f)
-        Console::printf("%s ", x.value);
-    Console::print('\n');
+    ISR::handle(13, [](Context::Registers& regs) {
+        Console::printf("Instruction address: %x\n", regs.eip);
+        Console::printf("Selector: %b\n", regs.errorCode);
+        panic("GP");
+    });
 
-    Vector<UniquePointer<Test>> p;
-    p.add(new Test("dyn"));
-    p.reserve(10);
-    p.resize(3);
+    ISR::handle(14, [](Context::Registers& regs) {
+        static const char* flagsMeanings[][2] = {
+            { "P    = 0: The fault was caused by a non-present page.",
+              "P    = 1: The fault was caused by a page-level protection violation." },
+            { "W/R  = 0: The access causing the fault was a read.",
+              "W/R  = 1: The access causing the fault was a write." },
+            { "U/S  = 0: A supervisor-mode access caused the fault.",
+              "U/S  = 1: A user-mode access caused the fault." },
+            { "RSVD = 0: The fault was not caused by reserved bit violation",
+              "RSVD = 1: The fault was caused by a reserved bit set to 1 in some paging-structure entry." },
+            { "I/D  = 0: The fault was not caused by an instruction fetch.",
+              "I/D  = 1: The fault was caused by an instruction fetch." }
+        };
+
+        const size_t NUM_FLAGS = sizeof flagsMeanings / sizeof *flagsMeanings;
+
+        uint32_t faultAddr = x86::regs::cr2();
+        Console::printf("Page Fault at %x!\n", faultAddr);
+
+        for (size_t i = 0; i < NUM_FLAGS; ++i) {
+            bool status = (regs.errorCode & (1 << i));
+            Console::printf("\t%s\n", flagsMeanings[i][status]);
+        }
+
+        panic("Page Fault (instruction: %x)", regs.eip);
+    });
+
+    Scheduler::start([] {
+        int shell = Scheduler::exec("shell");
+        Scheduler::wait(shell);
+
+        for (int i = 1; i < 10; ++i) {
+            Terminal::setActive(i % 2);
+            Console::printf("wasap %d\n", i);
+            Scheduler::sleep(Scheduler::current(), 2000);
+        }
+
+        Scheduler::exit();
+    });
 }
 
 void Kernel::panic(const char* msg, ...) {

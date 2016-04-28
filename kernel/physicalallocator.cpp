@@ -2,6 +2,7 @@
 #include "console.hpp"
 #include "paging.hpp"
 #include "memorymap.hpp"
+#include "kernel.hpp"
 
 extern uint32_t kernelEnd;
 uint32_t PhysicalAllocator::kernelEnd = Paging::alignUp(&::kernelEnd);
@@ -38,8 +39,12 @@ void PhysicalAllocator::init() {
 
 uint32_t PhysicalAllocator::allocate(size_t pages) {
     auto page = memory.findFree(pages);
-    if (!page)
-        Kernel::panic("No free physical memory!");
+    if (!page) {
+        if (pages == 1)
+            Kernel::panic("No free physical memory!");
+
+        return 0;
+    }
 
     memory.set(*page, pages);
     return *page * Paging::PAGE_SIZE;

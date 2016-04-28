@@ -3,8 +3,9 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include "containers/optional.hpp"
+#include "optional.hpp"
 #include "math.hpp"
+#include "task.h"
 
 class Paging {
 public:
@@ -43,6 +44,7 @@ public:
         WRITE_THROUGH  = 0x08,
         CACHE_DISABLED = 0x10,
         ACCESSED       = 0x20, // indicates whether software has accessed the area referenced by the table/directory entry
+        USER_SPACE     = 0x80
     };
 
     static void init();
@@ -50,11 +52,11 @@ public:
     static bool isMapped(uint32_t virtualAddress);
     static bool isMapped(uint32_t virtualAddress, size_t pages);
 
-    static Optional<uint32_t> findFree(size_t pages);
+    static Optional<uint32_t> findFree(size_t pages, uint32_t startAddress, uint32_t endAddress);
 
     template<class T>
-    static T findFree(size_t pages) {
-        auto virtualAddress = findFree(pages);
+    static T findFree(size_t pages, uint32_t startAddress, uint32_t endAddress) {
+        auto virtualAddress = findFree(pages, startAddress, endAddress);
         if (!virtualAddress)
             return nullptr;
 
@@ -87,6 +89,34 @@ public:
         return unmap(reinterpret_cast<uint32_t>(virtualAddress), pages);
     }
 
+    static void mapKernel(Task& task);
+
+    static bool map(Task& task, uint32_t virtualAddress, uint32_t physicalAddress, Flags flags = Flags::NONE);
+    static bool map(Task& task, uint32_t virtualAddress, uint32_t physicalAddress, size_t pages, Flags flags = Flags::NONE);
+
+    template<class T, class U>
+    static bool map(Task& task, T* virtualAddress, U* physicalAddress, Flags flags = Flags::NONE) {
+        return map(task, reinterpret_cast<uint32_t>(virtualAddress), reinterpret_cast<uint32_t>(physicalAddress), flags);
+    }
+
+    template<class T, class U>
+    static bool map(Task& task, T* virtualAddress, U* physicalAddress, size_t pages, Flags flags = Flags::NONE) {
+        return map(task, reinterpret_cast<uint32_t>(virtualAddress), reinterpret_cast<uint32_t>(physicalAddress), pages, flags);
+    }
+
+    static bool unmap(Task& task, uint32_t virtualAddress);
+    static bool unmap(Task& task, uint32_t virtualAddress, size_t pages);
+
+    template<class T>
+    static bool unmap(Task& task, T* virtualAddress) {
+        return unmap(task, reinterpret_cast<uint32_t>(virtualAddress));
+    }
+
+    template<class T>
+    static bool unmap(Task& task, T* virtualAddress, size_t pages) {
+        return unmap(task, reinterpret_cast<uint32_t>(virtualAddress), pages);
+    }
+
 private:
     struct Indexes {
         size_t pde, pte;
@@ -98,6 +128,8 @@ private:
     template<bool isPagingEnabled>
     static bool modify(uint32_t virtualAddress, uint32_t physicalAddress, Flags flags);
 
+    static bool modify(Task& task, uint32_t virtualAddress, uint32_t physicalAddress, Flags flags);
+
     static void identityMap(uint32_t startAddress, uint32_t endAddress, Flags flags = Flags::NONE);
 
     static constexpr size_t ENTRIES = 1024;
@@ -107,6 +139,8 @@ private:
         public:
             constexpr Entry() : value(0) { }
             Entry(uint32_t address, Flags flags = Flags::NONE);
+
+            uint32_t getPhysical() const;
 
             template<Paging::Flags flags>
             constexpr bool is() const;
@@ -150,8 +184,15 @@ private:
     static Directory::Entry* directory;
     static uint32_t firstFree;
 
-    static constexpr auto VIRTUAL_DIRECTORY = reinterpret_cast<Directory::Entry*>(0xfffff000);
-    static constexpr auto VIRTUAL_TABLES    = reinterpret_cast<Table::Entry*>(0xffc00000);
+    static constexpr auto VIRTUAL_DIRECTORY      = reinterpret_cast<Directory::Entry*>(0xfffff000);
+    static constexpr auto VIRTUAL_TABLES         = reinterpret_cast<Table::Entry*>(0xffc00000);
+
+    static constexpr auto VIRTUAL_TEMP_DIRECTORY = reinterpret_cast<Directory::Entry*>(0xffbff000);
+    static constexpr auto VIRTUAL_TEMP_TABLE     = reinterpret_cast<Table::Entry*>(0xffbfe000);
+
+public:
+    static constexpr uint32_t VIRTUAL_USERSPACE_BEGIN = 0x40000000; // 1GiB
+    static constexpr uint32_t VIRTUAL_USERSPACE_END   = reinterpret_cast<uint32_t>(VIRTUAL_TEMP_TABLE);
 };
 
 inline uint32_t& operator|=(uint32_t& lhs, Paging::Flags rhs) {

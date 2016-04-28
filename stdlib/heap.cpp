@@ -1,8 +1,7 @@
 #include "heap.hpp"
 #include "math.hpp"
-#include "paging.hpp"
-#include "physicalallocator.hpp"
-#include "virtualallocator.hpp"
+
+extern void* allocator(size_t pages);
 
 Heap::Header Heap::base = {
     &base, 0
@@ -23,21 +22,15 @@ Heap::Header* Heap::Header::meta(void* data) {
 }
 
 Heap::Header* Heap::expand(size_t bytes) {
-    auto blocks = Math::roundUp(bytes, Paging::PAGE_SIZE) / Paging::PAGE_SIZE;
+    auto blocks = Math::roundUp(bytes, PAGE_SIZE) / PAGE_SIZE;
+    auto header = static_cast<Header*>(allocator(blocks));
 
-    auto phys = PhysicalAllocator::allocate<Header*>(blocks);
-    auto virt = VirtualAllocator::allocate<Header*>(blocks);
-
-    if (!virt) {
-        PhysicalAllocator::free(phys, blocks);
+    if (!header)
         return nullptr;
-    }
 
-    Paging::map(virt, phys, blocks);
-
-    virt->size = blocks * Paging::PAGE_SIZE;
-    virt->next = head->next;
-    head->next = virt;
+    header->size = blocks * PAGE_SIZE;
+    header->next = head->next;
+    head->next = header;
 
     return head;
 }

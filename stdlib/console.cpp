@@ -1,18 +1,20 @@
 #include "console.hpp"
 #include "assert.hpp"
 
-void Console::init() {
-    Framebuffer::clear();
-    print("                            Welcome to Bug OS!\n", Console::Color::CYAN);
+extern void clear();
+extern void putchar(char c, Console::Color fg, Console::Color bg);
+extern void print(const char* s, Console::Color fg, Console::Color bg);
+
+void Console::clear() {
+    ::clear();
 }
 
 void Console::print(char c, Console::Color fg, Console::Color bg) {
-    Framebuffer::putchar(c, fg, bg);
+    ::putchar(c, fg, bg);
 }
 
 void Console::print(const char* s, Console::Color fg, Console::Color bg) {
-    while (*s != '\0')
-        print(*s++, fg, bg);
+    ::print(s, fg, bg);
 }
 
 void Console::print(const String& s, Console::Color fg, Console::Color bg) {
@@ -172,4 +174,3 @@ void Console::vprintf(Console::Color fg, Console::Color bg, const char* fmt, va_
         }
     }
 }
-

@@ -1,7 +1,7 @@
 #include "string.hpp"
 #include "utility.hpp"
-#include "support/memops.hpp"
-#include "support/new.hpp"
+#include "memops.hpp"
+#include "new.hpp"
 
 String::String() : size_(0), storage() { }
 

@@ -2,22 +2,30 @@
 
 retAddr: .int 0
 
-.global Context_save
-Context_save:
-    pop dword ptr retAddr
-
-    pusha # push edi, esi, ebp, esp, ebx, edx, ecx, eax
+.macro save_registers
+    pusha # save edi, esi, ebp, useless, ebx, edx, ecx, eax
 
     mov eax, ds
-    push eax # save the data segment descriptor
+    push eax # save the data segment selector
+.endm
 
-    mov ax, GDT_DATA_SELECTOR # load the kernel data segment selector
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
+.global Context_save_full #(esi = resume address, edi = additional flags)
+Context_save_full:
+    pop dword ptr retAddr
 
-    push esp # Context::Registers* regs = esp. push regs.
+    mov eax, ss
+    push eax                    # save ss
+    mov eax, esp
+    push eax                    # save esp
+    pushfd                      # save eflags (with additional flags specified)
+    or dword ptr [esp], edi
+    mov eax, cs
+    push eax                    # save cs
+    push esi                    # save resume address
+    push 0                      # save fake errorCode
+    push 0                      # save fake intNum
+
+    save_registers
 
     jmp dword ptr retAddr
 
@@ -25,14 +33,36 @@ Context_save:
 Context_restore:
     pop dword ptr retAddr
 
-    add esp, 4 # pop Context::Registers pointer away
-
-    pop eax
+    pop eax    # load ds
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
 
-    popa # pop edi, esi, ebp, esp, ebx, edx, ecx, eax
+    popa       # load edi, esi, ebp, useless, ebx, edx, ecx, eax
+
+    add esp, 8 # skip intNum, errorCode
+    iret       # load eip, cs, eflags, esp, ss
+
+.global Context_save_before_handler
+Context_save_before_handler:
+    pop dword ptr retAddr
+
+    save_registers
+
+    mov ax, GDT_DATA_SELECTOR # load the kernel data segment selector
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    push esp # Context::Registers* regs = esp. push regs.*/
 
     jmp dword ptr retAddr
+
+.global Context_save_after_handler
+Context_save_after_handler:
+    pop dword ptr retAddr
+
+    add esp, 4 # pop Context::Registers pointer away
+    call Context_restore

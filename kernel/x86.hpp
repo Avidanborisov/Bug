@@ -16,6 +16,7 @@ public:
 
     static void sti()                            asm("x86_sti");
     static void cli()                            asm("x86_cli");
+    static void hlt()                            asm("x86_hlt");
 
     static void interrupt(uint8_t n)             asm("x86_interrupt");
 
@@ -131,6 +132,35 @@ public:
             void operator=(uint32_t val)         asm("x86_set_cr3");
             uint32_t operator()()                asm("x86_get_cr3");
         } cr3                                    asm("x86_cr3");
+
+        static struct tr : Register<tr>  {
+            void operator=(uint32_t val)         asm("x86_set_tr");
+            uint32_t operator()()                asm("x86_get_tr");
+        } tr                                     asm("x86_tr");
+
+        static struct eip : Register<eip>  {
+            uint32_t operator()()                asm("x86_get_eip");
+        } eip                                    asm("x86_eip");
+    };
+
+    enum Flags {
+        CF   = 1 << 0,
+        PF   = 1 << 2,
+        AF   = 1 << 4,
+        ZF   = 1 << 6,
+        SF   = 1 << 7,
+        TF   = 1 << 8,
+        IF   = 1 << 9,
+        DF   = 1 << 10,
+        OF   = 1 << 11,
+        IOPL = 3 << 12,
+        NT   = 1 << 14,
+        RF   = 1 << 16,
+        VM   = 1 << 17,
+        AC   = 1 << 18,
+        VIF  = 1 << 19,
+        VIP  = 1 << 20,
+        ID   = 1 << 21,
     };
 };
 

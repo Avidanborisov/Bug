@@ -50,11 +50,9 @@ isrNoError 29
 isrNoError 30
 isrNoError 31
 
+isrNoError 80 # syscall handler
+
 commonTarget:
-    call Context_save
+    call Context_save_before_handler
     call ISR_commonHandler
-    call Context_restore
-
-    add esp, 8 # two arguments were pushed on the stack before calling this function
-    iret # pops cs, eip, eflags, ss, and esp and return from interrupt
-
+    call Context_save_after_handler

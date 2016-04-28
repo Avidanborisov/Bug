@@ -2,7 +2,7 @@
 #define MEMORYMAP_HPP
 
 #include <stdint.h>
-#include "containers/array.hpp"
+#include "array.hpp"
 #include "boot/e820.hpp"
 
 class MemoryMap {

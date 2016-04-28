@@ -6,7 +6,10 @@ CONFIG -= qt
 
 SUBDIRS = \
     bootloader \
-    kernel
+    kernel \
+    stdlib \
+    userlib \
+    programs/shell
 
 image.target   = Bug.img
 image.depends  = bootloader/bootloader.bin kernel/kernel.bin
@@ -14,6 +17,9 @@ image.commands = $$PWD/scripts/build-image.sh
 
 first.depends = image
 QMAKE_EXTRA_TARGETS = image first
+
+kernel.depends = stdlib \
+    programs/shell
 
 OTHER_FILES += \
     README.md \

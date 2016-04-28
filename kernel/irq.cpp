@@ -71,7 +71,7 @@ void IRQ::handle(uint8_t num, IRQ::Handler* handler) {
     handlers[num] = handler;
 }
 
-void IRQ::commonHandler(const Context::Registers& regs) {
+void IRQ::commonHandler(Context::Registers& regs) {
     // If the IRQ is on the slave PIC, send EOI to it
     if (regs.intNum >= 8)
         slave.sendEOI();

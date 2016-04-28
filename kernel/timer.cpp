@@ -3,15 +3,15 @@
 #include "irq.hpp"
 #include "context.hpp"
 #include "console.hpp"
+#include "scheduler.hpp"
 
 void Timer::disable() {
     x86::out(PIT_COMMAND_PORT, 0x31);
 }
 
 void Timer::start(uint32_t freq) {
-    IRQ::handle(0, [](const Context::Registers&) {
-        static uint32_t tick = 0;
-        Console::printf("Tick: %d\n", ++tick);
+    IRQ::handle(0, [](Context::Registers&) {
+        Scheduler::tick();
     });
 
     uint32_t divisor = PIT_FREQUENCY / freq;

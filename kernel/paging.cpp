@@ -3,6 +3,8 @@
 #include "virtualallocator.hpp"
 #include "x86.hpp"
 #include "framebuffer.hpp"
+#include "mappedpointer.hpp"
+#include "kernel.hpp"
 
 Paging::Directory::Entry* Paging::directory;
 uint32_t Paging::firstFree;
@@ -12,11 +14,11 @@ void Paging::init() {
     Directory::init(directory);
 
     // identity map kernel code and data
-    identityMap(0, PhysicalAllocator::getKernelEnd(), Flags::USER);
+    identityMap(0, PhysicalAllocator::getKernelEnd(), Flags::WRITE);
     firstFree = PhysicalAllocator::getKernelEnd();
 
     // identity map framebuffer video memory
-    identityMap(alignDown(Framebuffer::PHYSICAL_MEMORY_START), alignUp(Framebuffer::PHYSICAL_MEMORY_END), Flags::USER);
+    identityMap(alignDown(Framebuffer::PHYSICAL_MEMORY_START), alignUp(Framebuffer::PHYSICAL_MEMORY_END), Flags::USER | Flags::WRITE);
 
     // recursive page directory mapping - map last pde to point to the page directory.
     // since pde's and pte's are in compatiable format, this allows accessing physical
@@ -46,11 +48,13 @@ bool Paging::isMapped(uint32_t virtualAddress, size_t pages) {
     return false;
 }
 
-Optional<uint32_t> Paging::findFree(size_t pages) {
-    constexpr auto TOP_ADDRESS = reinterpret_cast<uint32_t>(VIRTUAL_TABLES);
-    const auto lastAddress = TOP_ADDRESS - pages * PAGE_SIZE;
+Optional<uint32_t> Paging::findFree(size_t pages, uint32_t startAddress, uint32_t endAddress) {
+    if (startAddress == 0)
+        startAddress = firstFree;
 
-    for (uint32_t address = firstFree; address <= lastAddress; address += PAGE_SIZE)
+    endAddress -= pages * PAGE_SIZE;
+
+    for (uint32_t address = startAddress; address <= endAddress; address += PAGE_SIZE)
         if (!isMapped(address, pages))
             return address;
 
@@ -62,8 +66,8 @@ bool Paging::map(uint32_t virtualAddress, uint32_t physicalAddress, Paging::Flag
 }
 
 bool Paging::map(uint32_t virtualAddress, uint32_t physicalAddress, size_t pages, Paging::Flags flags) {
-    if (isMapped(virtualAddress), pages)
-        return true;
+    if (isMapped(virtualAddress, pages))
+        return false;
 
     for (size_t page = 0; page < pages; ++page) {
         if (!map(virtualAddress + page * PAGE_SIZE, physicalAddress + page * PAGE_SIZE, flags))
@@ -200,4 +204,94 @@ void Paging::Directory::init(Paging::Directory::Entry* first) {
     // initialize all entries
     for (size_t i = 0; i < ENTRIES; ++i)
         directory[i] = Entry();
+}
+
+void Paging::mapKernel(Task& task) {
+    task.cr3 = PhysicalAllocator::allocate(1);
+    MappedPointer<Directory::Entry> newDirectory(task.cr3, VIRTUAL_TEMP_DIRECTORY);
+
+    Directory::init(newDirectory.get());
+
+    for (size_t addr = 0; addr < VIRTUAL_USERSPACE_BEGIN; addr += PAGE_SIZE * ENTRIES) {
+        auto pde = parseAddress(addr).pde;
+        newDirectory[pde] = directory[pde];
+    }
+}
+
+bool Paging::modify(Task& task, uint32_t virtualAddress, uint32_t physicalAddress, Paging::Flags flags) {
+    const enum {
+        MAP, UNMAP
+    } operation = (flags == Flags::NONE) ? UNMAP : MAP;
+
+    if (!isAligned(virtualAddress))
+        return false;
+
+    MappedPointer<Directory::Entry> directory(task.cr3, VIRTUAL_TEMP_DIRECTORY);
+
+    auto indexes = parseAddress(virtualAddress);
+    Directory::Entry& pde = directory[indexes.pde];
+
+    if (!pde.is<Flags::PRESENT>() && operation == UNMAP) {
+        Kernel::panic("failed mapping 1");
+        return false;
+    }
+
+    auto tablePhysical = pde.is<Flags::PRESENT>() ? pde.getTablePhysical() : Table::allocate();
+    MappedPointer<Table::Entry> table(tablePhysical, VIRTUAL_TEMP_TABLE);
+
+    if (!pde.is<Flags::PRESENT>() && operation == MAP) {
+        Table::init(table.get());
+        pde = Directory::Entry(tablePhysical, Flags::WRITE | Flags::USER);
+        task.segments.push({ reinterpret_cast<uint32_t>(tablePhysical), 0, 1 });
+    }
+
+    Table::Entry& pte = table[indexes.pte];
+    if (pte.is<Flags::PRESENT>()) {
+        if (operation == MAP) {
+            Kernel::panic("failed mapping 2");
+            return false;
+        }
+
+        pte = Table::Entry(); // empty entry (not present)
+    } else {
+        if (operation == UNMAP) {
+            Kernel::panic("failed mapping 3");
+            return false;
+        }
+
+        pte = Table::Entry(physicalAddress, flags);
+    }
+
+    return true;
+}
+
+
+bool Paging::map(Task& task, uint32_t virtualAddress, uint32_t physicalAddress, Paging::Flags flags) {
+    return modify(task, virtualAddress, physicalAddress, flags | Flags::PRESENT);
+}
+
+bool Paging::map(Task& task, uint32_t virtualAddress, uint32_t physicalAddress, size_t pages, Paging::Flags flags) {
+    for (size_t page = 0; page < pages; ++page) {
+        if (!map(task, virtualAddress + page * PAGE_SIZE, physicalAddress + page * PAGE_SIZE, flags)) {
+            while (page-- > 0)
+                Paging::unmap(task, virtualAddress + page * Paging::PAGE_SIZE);
+
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool Paging::unmap(Task& task, uint32_t virtualAddress) {
+    return modify(task, virtualAddress, 0, Flags::NONE);
+}
+
+bool Paging::unmap(Task& task, uint32_t virtualAddress, size_t pages) {
+    for (size_t page = 0; page < pages; ++page) {
+        if (!unmap(task, virtualAddress + page * PAGE_SIZE))
+            return false;
+    }
+
+    return true;
 }

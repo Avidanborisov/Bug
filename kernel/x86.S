@@ -41,6 +41,11 @@ x86_cli:
     cli
     ret
 
+.global x86_hlt
+x86_hlt:
+    hlt
+    ret
+
 .global x86_interrupt
 x86_interrupt:
     mov eax, [esp + 4]
@@ -74,6 +79,28 @@ reload:
 x86_get_cs:
     mov eax, cs
     ret
+
+.global x86_tr
+x86_tr:
+
+.global x86_set_tr
+x86_set_tr:
+    mov eax, [esp + 8] # 1st arg is this pointer
+    ltr ax
+    ret
+
+.global x86_get_tr
+x86_get_tr:
+    str eax
+    ret
+
+.global x86_eip
+x86_eip:
+
+.global x86_get_eip
+x86_get_eip:
+    pop eax
+    jmp eax
 
 .macro createRegisterProperty reg
 .global x86_\reg

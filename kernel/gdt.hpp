@@ -7,10 +7,22 @@ class GDT {
 public:
     static void init();
 
-    static const uint16_t CODE_SELECTOR      asm("GDT_CODE_SELECTOR");
-    static const uint16_t DATA_SELECTOR      asm("GDT_DATA_SELECTOR");
-    static const uint16_t USER_CODE_SELECTOR asm("GDT_USER_CODE_SELECTOR");
-    static const uint16_t USER_DATA_SELECTOR asm("GDT_USER_DATA_SELECTOR");
+    class Selector {
+        uint16_t selector;
+
+    public:
+        constexpr Selector(uint16_t index, uint8_t ring);
+
+        constexpr operator uint16_t() const {
+            return selector;
+        }
+    };
+
+    static const Selector CODE_SELECTOR      asm("GDT_CODE_SELECTOR");
+    static const Selector DATA_SELECTOR      asm("GDT_DATA_SELECTOR");
+    static const Selector USER_CODE_SELECTOR asm("GDT_USER_CODE_SELECTOR");
+    static const Selector USER_DATA_SELECTOR asm("GDT_USER_DATA_SELECTOR");
+    static const Selector TSS_SELECTOR       asm("GDT_TSS_SELECTOR");
 
 private:
     // GDT Entry:
@@ -28,8 +40,11 @@ private:
     static class Entry {
     public:
         Entry(uint32_t base, uint32_t limit, uint8_t ring, bool isExec);
+        Entry(uint32_t base, uint8_t ring);
 
     private:
+        Entry(uint32_t base, uint32_t limit, uint8_t ring);
+
         uint16_t limitLow;
         uint16_t baseLow;
         uint8_t baseMid;

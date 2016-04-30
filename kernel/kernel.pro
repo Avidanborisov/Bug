@@ -15,7 +15,7 @@ DEPENDPATH += $$PWD/../stdlib
 PRE_TARGETDEPS += $$OUT_PWD/../stdlib/libstdlib.a
 
 # Link all user program executables (data objects generated from elf executables)
-LIBS += $$OUT_PWD/../programs/shell/shell.o
+LIBS += $$OUT_PWD/../programs/shell/shell.o $$OUT_PWD/../programs/snake/snake.o
 
 # Force link each time to get updated programs objects
 forcelink.target = forcelink

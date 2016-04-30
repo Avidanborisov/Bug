@@ -15,7 +15,11 @@ public:
     void print(const char* s, Console::Color fg = Console::Color::WHITE, Console::Color bg = Console::Color::BLACK);
 
     void sendInput(char key);
+    bool hasInput();
     size_t read(char* buffer, size_t max);
+
+    void setPosition(int x, int y);
+    void dontPrint(bool status);
 
     static void setActive(size_t tty);
     static size_t getActiveTTY();
@@ -23,6 +27,8 @@ public:
     static Terminal& get(int tty);
 
 private:
+    bool dp = false;
+
     void clear(Framebuffer::Monitor& monitor);
     void scroll();
 

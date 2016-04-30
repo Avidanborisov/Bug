@@ -70,6 +70,18 @@ bool System::kill(int pid) {
     return syscall(14, pid, 0, 0);
 }
 
+bool System::hasInput() {
+    return syscall(15, 0, 0, 0);
+}
+
+void System::setPosition(int x, int y) {
+    syscall(16, x, y, 0);
+}
+
+void System::dontPrint(bool status) {
+    syscall(17, status, 0, 0);
+}
+
 String System::pwd() {
     return File::read("/task/wd");
 }

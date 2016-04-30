@@ -73,6 +73,10 @@ public:
     static char getChar();
     static String getLine();
 
+    static bool hasInput();
+    static void setPosition(int x, int y);
+    static void dontPrint(bool status);
+
 private:
     static void printfImpl(const char* fmt, ...);
     static void printfImpl(Color fg, const char* fmt, ...);

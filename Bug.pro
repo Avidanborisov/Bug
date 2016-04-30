@@ -9,7 +9,8 @@ SUBDIRS = \
     kernel \
     stdlib \
     userlib \
-    programs/shell
+    programs/shell \
+    programs/snake
 
 image.target   = Bug.img
 image.depends  = bootloader/bootloader.bin kernel/kernel.bin
@@ -19,7 +20,8 @@ first.depends = image
 QMAKE_EXTRA_TARGETS = image first
 
 kernel.depends = stdlib \
-    programs/shell
+    programs/shell \
+    programs/snake
 
 OTHER_FILES += \
     README.md \

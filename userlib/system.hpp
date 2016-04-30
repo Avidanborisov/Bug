@@ -33,6 +33,10 @@ public:
 
     static bool kill(int pid);
 
+    static bool hasInput();
+    static void setPosition(int x, int y);
+    static void dontPrint(bool status);
+
     static String pwd();
     static Vector<String> files();
     static Vector<String> subdirs();

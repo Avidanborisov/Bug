@@ -21,7 +21,10 @@ ISR::Handler* Syscalls::handlers[] = {
     Syscalls::write,
     Syscalls::swd,
     Syscalls::date,
-    Syscalls::kill
+    Syscalls::kill,
+    Syscalls::hasInput,
+    Syscalls::setPosition,
+    Syscalls::dontPrint
 };
 
 const size_t Syscalls::NUM_SYSCALLS = sizeof(Syscalls::handlers) / sizeof(Syscalls::handlers[0]);
@@ -136,4 +139,22 @@ void Syscalls::kill(Context::Registers& regs) {
 
     Scheduler::kill(pid);
     regs.eax = 1;
+}
+
+void Syscalls::hasInput(Context::Registers& regs) {
+    auto tty = Scheduler::tty(Scheduler::current());
+    regs.eax = Terminal::get(tty).hasInput();
+}
+
+void Syscalls::setPosition(Context::Registers& regs) {
+    int x = regs.ebx;
+    int y = regs.ecx;
+    auto tty = Scheduler::tty(Scheduler::current());
+    Terminal::get(tty).setPosition(x, y);
+}
+
+void Syscalls::dontPrint(Context::Registers& regs) {
+    bool status = regs.ebx;
+    auto tty = Scheduler::tty(Scheduler::current());
+    Terminal::get(tty).dontPrint(status);
 }

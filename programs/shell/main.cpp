@@ -40,6 +40,7 @@ void main() {
             Console::print("sleep ms  - sleep for 'ms' millisecs\n");
             Console::print("mem       - view physical memory statistics\n");
             Console::print("exit      - exit current shell\n");
+            Console::print("snake :)  - play snake\n");
         }
 
         if (cmd == "list") {
@@ -104,6 +105,9 @@ void main() {
             Console::print(File::read("/sys/tasks"));
         } else if (cmd == "mem") {
             Console::print(File::read("/sys/mem"));
+        } else if (cmd == "snake") {
+            int snake = System::exec("snake");
+            System::wait(snake);
         } else if (cmd == "exit") {
             System::exit();
         }

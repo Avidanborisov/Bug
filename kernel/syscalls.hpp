@@ -28,6 +28,9 @@ private:
     static void swd(Context::Registers& regs);
     static void date(Context::Registers& regs);
     static void kill(Context::Registers& regs);
+    static void hasInput(Context::Registers& regs);
+    static void setPosition(Context::Registers& regs);
+    static void dontPrint(Context::Registers& regs);
 };
 
 #endif // SYSCALLS_HPP

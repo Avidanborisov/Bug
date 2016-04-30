@@ -5,6 +5,9 @@ extern void clear();
 extern void putchar(char c, Console::Color fg, Console::Color bg);
 extern void print(const char* s, Console::Color fg, Console::Color bg);
 extern size_t input(char* buffer, size_t max);
+extern bool hasInput();
+extern void setPosition(int x, int y);
+extern void dontPrint(bool status);
 
 void Console::clear() {
     ::clear();
@@ -187,4 +190,16 @@ String Console::getLine() {
     size_t n = input(buf, sizeof buf);
     String line(buf, n - 1);
     return line;
+}
+
+bool Console::hasInput() {
+    return ::hasInput();
+}
+
+void Console::setPosition(int x, int y) {
+    return ::setPosition(x, y);
+}
+
+void Console::dontPrint(bool status) {
+    return ::dontPrint(status);
 }

@@ -61,7 +61,9 @@ void Terminal::sendInput(char key) {
 
     if (key == '\b') {
         if (entered > 0) {
-            Console::print(key);
+            if (!dp) {
+                Console::print(key);
+            }
             input.insert(0, { key });
         }
 
@@ -69,8 +71,14 @@ void Terminal::sendInput(char key) {
     }
 
     input.insert(0, { key });
-    Console::print(key);
+    if (!dp) {
+        Console::print(key);
+    }
     inputWaiters.wake();
+}
+
+bool Terminal::hasInput() {
+    return input.size() > 0;
 }
 
 size_t Terminal::read(char* buffer, size_t max) {
@@ -108,6 +116,11 @@ size_t Terminal::read(char* buffer, size_t max) {
 
         inputWaiters.wait();
     }
+}
+
+void Terminal::setPosition(int x, int y) {
+    cursor = { (uint8_t)x, (uint8_t)y };
+    updateCursor();
 }
 
 void Terminal::scroll() {
@@ -175,6 +188,10 @@ void Terminal::updateCursor() {
         Framebuffer::Cursor::update(cursor.x, cursor.y);
 }
 
+void Terminal::dontPrint(bool status) {
+    dp = status;
+}
+
 void clear() {
     Terminal::getActive().clear();
 }
@@ -189,4 +206,16 @@ void print(const char* s, Console::Color fg, Console::Color bg) {
 
 size_t input(char* buffer, size_t max) {
     return Terminal::getActive().read(buffer, max);
+}
+
+bool hasInput() {
+    return Terminal::getActive().hasInput();
+}
+
+void setPosition(int x, int y) {
+    return Terminal::getActive().setPosition(x, y);
+}
+
+void dontPrint(bool status) {
+    return Terminal::getActive().dontPrint(status);
 }

@@ -28,6 +28,18 @@ int write(const char* file, const char* buffer, size_t count, size_t offset = 0)
     return System::write(file, buffer, count, offset);
 }
 
+bool hasInput() {
+    return System::hasInput();
+}
+
+void setPosition(int x, int y) {
+    return System::setPosition(x, y);
+}
+
+void dontPrint(bool status) {
+    return System::dontPrint(status);
+}
+
 extern void main();
 
 extern "C" void abort(const char* msg, ...) {

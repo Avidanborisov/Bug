@@ -14,12 +14,15 @@
 #include "isr.hpp"
 #include "irq.hpp"
 #include "terminal.hpp"
+#include "keyboard.hpp"
+#include "filesystem.hpp"
+#include "sysfs.hpp"
+#include "file.hpp"
 
 void Kernel::main() {
     Timer::disable();
 
     Console::clear();
-    Console::print("                            Welcome to Bug OS!\n", Console::Color::CYAN);
 
     GDT::init();
     Interrupts::init();
@@ -28,51 +31,39 @@ void Kernel::main() {
     PhysicalAllocator::init();
     Paging::init();
 
-    Console::printf("%x\n", PhysicalAllocator::getKernelEnd());
+    Filesystem::init();
+    Keyboard::install();
 
-    ISR::handle(13, [](Context::Registers& regs) {
-        Console::printf("Instruction address: %x\n", regs.eip);
-        Console::printf("Selector: %b\n", regs.errorCode);
-        panic("GP");
-    });
-
-    ISR::handle(14, [](Context::Registers& regs) {
-        static const char* flagsMeanings[][2] = {
-            { "P    = 0: The fault was caused by a non-present page.",
-              "P    = 1: The fault was caused by a page-level protection violation." },
-            { "W/R  = 0: The access causing the fault was a read.",
-              "W/R  = 1: The access causing the fault was a write." },
-            { "U/S  = 0: A supervisor-mode access caused the fault.",
-              "U/S  = 1: A user-mode access caused the fault." },
-            { "RSVD = 0: The fault was not caused by reserved bit violation",
-              "RSVD = 1: The fault was caused by a reserved bit set to 1 in some paging-structure entry." },
-            { "I/D  = 0: The fault was not caused by an instruction fetch.",
-              "I/D  = 1: The fault was caused by an instruction fetch." }
-        };
-
-        const size_t NUM_FLAGS = sizeof flagsMeanings / sizeof *flagsMeanings;
-
-        uint32_t faultAddr = x86::regs::cr2();
-        Console::printf("Page Fault at %x!\n", faultAddr);
-
-        for (size_t i = 0; i < NUM_FLAGS; ++i) {
-            bool status = (regs.errorCode & (1 << i));
-            Console::printf("\t%s\n", flagsMeanings[i][status]);
-        }
-
-        panic("Page Fault (instruction: %x)", regs.eip);
+    Sysfs::set("/sys/mem", []() {
+        return "Total physical memory used: " + String::fromInt(PhysicalAllocator::used()) + " bytes\n" +
+               "Physical memory available:  " + String::fromInt(PhysicalAllocator::available()) + " bytes\n";
     });
 
     Scheduler::start([] {
-        int shell = Scheduler::exec("shell");
-        Scheduler::wait(shell);
+        Vector<int> shells;
 
-        for (int i = 1; i < 10; ++i) {
-            Terminal::setActive(i % 2);
-            Console::printf("wasap %d\n", i);
-            Scheduler::sleep(Scheduler::current(), 2000);
+        for (size_t i = 0; i < Terminal::NUM_TERMINALS; ++i) {
+            Terminal::setActive(i);
+            shells.add(Scheduler::exec("shell"));
         }
 
+        Terminal::setActive(0);
+
+        // keep execting the shells forever
+//        while (true) {
+//            int exitedShell = Scheduler::wait(Scheduler::CHILD_ANY);
+
+//            auto curr = Terminal::getActiveTTY();
+//            for (size_t i = 0; i < shells.size(); ++i) {
+//                if (shells[i] == exitedShell) {
+//                    Terminal::setActive(i);
+//                    shells[i] = Scheduler::exec("shell");
+//                    Terminal::setActive(curr);
+//                }
+//            }
+//        }
+
+        Scheduler::wait(Scheduler::CHILD_ALL);
         Scheduler::exit();
     });
 }

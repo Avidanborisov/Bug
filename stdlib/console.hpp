@@ -70,6 +70,9 @@ public:
         printfImpl(Detail::value(args)...);
     }
 
+    static char getChar();
+    static String getLine();
+
 private:
     static void printfImpl(const char* fmt, ...);
     static void printfImpl(Color fg, const char* fmt, ...);

@@ -4,6 +4,7 @@
 extern void clear();
 extern void putchar(char c, Console::Color fg, Console::Color bg);
 extern void print(const char* s, Console::Color fg, Console::Color bg);
+extern size_t input(char* buffer, size_t max);
 
 void Console::clear() {
     ::clear();
@@ -173,4 +174,17 @@ void Console::vprintf(Console::Color fg, Console::Color bg, const char* fmt, va_
                 break;
         }
     }
+}
+
+char Console::getChar() {
+    char c;
+    input(&c, 1);
+    return c;
+}
+
+String Console::getLine() {
+    char buf[256];
+    size_t n = input(buf, sizeof buf);
+    String line(buf, n - 1);
+    return line;
 }

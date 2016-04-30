@@ -6,7 +6,7 @@
 
 namespace ELF {
 
-struct ProgramHeader;
+class ProgramHeader;
 
 class Header {
 public:
@@ -43,7 +43,7 @@ private:
     uint16_t e_shstrndx;  /* Section header string table index */
 };
 
-struct ProgramHeader {
+class ProgramHeader {
 public:
     constexpr bool isLoadable() {
         return p_type == 1;

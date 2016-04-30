@@ -1,4 +1,5 @@
 #include "cxxabi.hpp"
+#include "assert.hpp"
 
 extern "C" {
 
@@ -35,6 +36,10 @@ void __cxa_finalize(void *f) {
             __atexit_funcs[i].destructor_func = 0;
         }
     }
+}
+
+void __cxa_pure_virtual() {
+    assert("Called pure virtual function" && false);
 }
 
 }

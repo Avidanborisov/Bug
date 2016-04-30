@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include "console.hpp"
+#include "datetime.hpp"
 
 class System {
 public:
@@ -12,12 +13,29 @@ public:
     static void putchar(char c, Console::Color fg, Console::Color bg);
     static void print(const char* s, Console::Color fg, Console::Color bg);
     static void clear();
+
     static void sleep(size_t ms);
     static int exec(const char* executable);
-    static void wait(int child);
-    static void* increase(size_t pages);
+    static int wait(int child);
     static void exit();
     static int pid();
+
+    static void* increase(size_t pages);
+
+    static size_t input(char* buffer, size_t max);
+    static int read(const char* file, char* buffer, size_t count, size_t offset);
+    static int write(const char* file, const char* buffer, size_t count, size_t offset);
+
+    static void swd(const char* workingDirectory);
+    static void swd(const String& workingDirectory);
+
+    static DateTime date();
+
+    static bool kill(int pid);
+
+    static String pwd();
+    static Vector<String> files();
+    static Vector<String> subdirs();
 
 private:
     static int syscall(int eax, int ebx, int ecx, int edx) asm("syscall");

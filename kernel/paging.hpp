@@ -44,10 +44,10 @@ public:
         WRITE_THROUGH  = 0x08,
         CACHE_DISABLED = 0x10,
         ACCESSED       = 0x20, // indicates whether software has accessed the area referenced by the table/directory entry
-        USER_SPACE     = 0x80
     };
 
     static void init();
+    static uint32_t getKernelDirectory();
 
     static bool isMapped(uint32_t virtualAddress);
     static bool isMapped(uint32_t virtualAddress, size_t pages);
@@ -182,6 +182,7 @@ private:
     static_assert(sizeof(Directory::Entry) * ENTRIES == PAGE_SIZE, "Page Directory takes whole page");
 
     static Directory::Entry* directory;
+    static Directory::Entry* physicalKernelDirectory;
     static uint32_t firstFree;
 
     static constexpr auto VIRTUAL_DIRECTORY      = reinterpret_cast<Directory::Entry*>(0xfffff000);

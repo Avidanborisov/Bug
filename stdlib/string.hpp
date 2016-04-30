@@ -1,8 +1,10 @@
 #ifndef STRING_HPP
 #define STRING_HPP
 
-#include "stddef.h"
-#include "limits.h"
+#include <stdint.h>
+#include <stddef.h>
+#include <limits.h>
+#include "vector.hpp"
 
 class String {
 public:
@@ -86,6 +88,56 @@ public:
     static size_t length(const char* str);
     static int compare(const char* s1, const char* s2, size_t length);
     static int compare(const char* s1, const char* s2);
+
+    Vector<String> split(char sep = ' ') const;
+
+    static String fromInt(uint32_t num, int base = 10) {
+        static constexpr char CHARMAP[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+        assert(base >= 2 && base <= 36);
+
+        String str;
+        do {
+            str = CHARMAP[num % base] + str;
+            num /= base;
+        } while (num > 0);
+
+        return str;
+    }
+
+    static String fromInt(int32_t num, int base = 10) {
+        if (num < 0) {
+            String s("-");
+            s += fromInt(static_cast<uint32_t>(-num), base);
+            return s;
+        } else {
+            return fromInt(static_cast<uint32_t>(num), base);
+        }
+    }
+
+    static String fromInt(unsigned num, int base = 10) {
+        return fromInt(static_cast<uint32_t>(num), base);
+    }
+
+    static String fromInt(int num, int base = 10) {
+        return fromInt(static_cast<int32_t>(num), base);
+    }
+
+    int toInt(int base = 10) {
+        String charmap("0123456789abcdefghijklmnopqrstuvwxyz");
+
+        int num = 0;
+        int factor = 1;
+        for (size_t i = length(); i-- > 0;) {
+            auto digit = charmap.find(data()[i]);
+            if (digit == npos)
+                return 0;
+
+            num += digit * factor;
+            factor *= base;
+        }
+
+        return num;
+    }
 
 private:
     void concat(const char* s, size_t len);

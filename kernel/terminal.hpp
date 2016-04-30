@@ -4,17 +4,22 @@
 #include "framebuffer.hpp"
 #include "console.hpp"
 #include "array.hpp"
+#include "waitqueue.hpp"
 
 class Terminal {
 public:
-    static constexpr auto NUM_TERMINALS = 12;
+    static constexpr size_t NUM_TERMINALS = 12;
 
     void clear();
     void putchar(char c, Console::Color fg = Console::Color::WHITE, Console::Color bg = Console::Color::BLACK);
     void print(const char* s, Console::Color fg = Console::Color::WHITE, Console::Color bg = Console::Color::BLACK);
 
-    static void setActive(int tty);
-    static int getActive();
+    void sendInput(char key);
+    size_t read(char* buffer, size_t max);
+
+    static void setActive(size_t tty);
+    static size_t getActiveTTY();
+    static Terminal& getActive();
     static Terminal& get(int tty);
 
 private:
@@ -32,6 +37,9 @@ private:
 
     Framebuffer::Monitor* backend = nullptr;
     Framebuffer::Monitor& virtualMonitor();
+
+    WaitQueue inputWaiters;
+    Vector<char> input;
 
     static size_t active;
     static Terminal terminals[];

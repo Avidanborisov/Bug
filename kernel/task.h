@@ -3,6 +3,7 @@
 
 #include "context.hpp"
 #include "vector.hpp"
+#include "string.hpp"
 
 class Task {
 public:
@@ -10,8 +11,12 @@ public:
     int parent;
     int waitingFor;
 
+    String name;
+
     size_t timeout;
     size_t rounds;
+
+    size_t tty;
 
     enum class State {
         EMPTY,
@@ -36,6 +41,8 @@ public:
 
     Vector<Segment> segments;
     uint32_t end;
+
+    Vector<String> workingDirectory;
 
 private:
     static void init(int firstPid)               asm("Task_init");

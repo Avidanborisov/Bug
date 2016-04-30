@@ -1,9 +1,11 @@
 #include "isr.hpp"
 #include "idt.hpp"
-#include "assert.hpp"
 #include "console.hpp"
 #include "syscalls.hpp"
 #include "kernel.hpp"
+#include "scheduler.hpp"
+#include "terminal.hpp"
+#include "x86.hpp"
 
 extern "C" void  isr0(void);
 extern "C" void  isr1(void);
@@ -39,8 +41,6 @@ extern "C" void isr30(void);
 extern "C" void isr31(void);
 
 extern "C" void isr80(void);
-
-ISR::Handler* ISR::handlers[ISR::NUM_EXCEPTIONS] = { nullptr };
 
 void ISR::init() {
     IDT::setEntry(0 , isr0);
@@ -79,10 +79,40 @@ void ISR::init() {
     IDT::setEntry(80, isr80, 3); // syscall handler
 }
 
-void ISR::handle(uint8_t num, ISR::Handler* handler) {
-    assert(num < NUM_EXCEPTIONS);
-    handlers[num] = handler;
-}
+const char* ISR::exceptions[NUM_EXCEPTIONS] {
+    "Division by zero",
+    "Debugger",
+    "NMI",
+    "Breakpoint",
+    "Overflow",
+    "Bounds",
+    "Invalid Opcode",
+    "Coprocessor not available",
+    "Double fault",
+    "Coprocessor segment overrun",
+    "Invalid Task State Segment",
+    "Segment not present",
+    "Stack Fault",
+    "General protection fault",
+    "Page Fault",
+    "Reserved",
+    "Math Fault",
+    "Alignment Check",
+    "Machine Check",
+    "SIMD Floating Point Exception",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved"
+};
 
 void ISR::commonHandler(Context::Registers& regs) {
     if (regs.intNum == SYSCALL_HANDLER) {
@@ -90,8 +120,59 @@ void ISR::commonHandler(Context::Registers& regs) {
         return;
     }
 
-    if (handlers[regs.intNum])
-        handlers[regs.intNum](regs);
-    else
+    if (regs.intNum > NUM_EXCEPTIONS) {
         Kernel::panic("Unhandled interrupt: %d\n", regs.intNum);
+    }
+
+    auto ex = regs.intNum;
+
+    if (Scheduler::started()) {
+        auto pid = Scheduler::current();
+        Terminal::setActive(Scheduler::tty(pid));
+        Console::printf(Console::Color::BLUE, "Exception %u (%s) occured in task %d\n", ex, exceptions[ex], pid);
+    } else {
+        Console::printf(Console::Color::RED,  "Exception %u (%s) occured\n", ex, exceptions[ex]);
+    }
+
+    Console::printf("error code = 0x%x\n", regs.errorCode);
+    Console::printf("eip        = 0x%x\n", regs.eip);
+    Console::printf("esp        = 0x%x\n", regs.esp);
+    Console::printf("eflags     = 0x%x\n", regs.eflags);
+    Console::printf("cs         = 0x%x\n", regs.cs);
+    Console::printf("ss         = 0x%x\n", regs.ss);
+    Console::printf("cr2        = 0x%x\n", x86::regs::cr2());
+    Console::printf("cr3        = 0x%x\n", x86::regs::cr3());
+
+    // page fault
+    if (ex == 14) {
+        static const char* flagsMeanings[][2] = {
+            { "P    = 0: The fault was caused by a non-present page.",
+              "P    = 1: The fault was caused by a page-level protection violation." },
+            { "W/R  = 0: The access causing the fault was a read.",
+              "W/R  = 1: The access causing the fault was a write." },
+            { "U/S  = 0: A supervisor-mode access caused the fault.",
+              "U/S  = 1: A user-mode access caused the fault." },
+            { "RSVD = 0: The fault was not caused by reserved bit violation",
+              "RSVD = 1: The fault was caused by a reserved bit set to 1 in some paging-structure entry." },
+            { "I/D  = 0: The fault was not caused by an instruction fetch.",
+              "I/D  = 1: The fault was caused by an instruction fetch." }
+        };
+
+        const size_t NUM_FLAGS = sizeof flagsMeanings / sizeof *flagsMeanings;
+
+        uint32_t faultAddr = x86::regs::cr2();
+        Console::printf("Page Fault at %x!\n", faultAddr);
+
+        for (size_t i = 0; i < NUM_FLAGS; ++i) {
+            bool status = (regs.errorCode & (1 << i));
+            Console::printf("\t%s\n", flagsMeanings[i][status]);
+        }
+    }
+
+    if (Scheduler::started()) {
+        Console::printf(Console::Color::RED, "Aborting task!\n");
+        Scheduler::exit();
+    } else {
+        Kernel::panic("Exception occured");
+    }
 }

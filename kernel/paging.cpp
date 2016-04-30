@@ -7,6 +7,7 @@
 #include "kernel.hpp"
 
 Paging::Directory::Entry* Paging::directory;
+Paging::Directory::Entry* Paging::physicalKernelDirectory;
 uint32_t Paging::firstFree;
 
 void Paging::init() {
@@ -18,7 +19,7 @@ void Paging::init() {
     firstFree = PhysicalAllocator::getKernelEnd();
 
     // identity map framebuffer video memory
-    identityMap(alignDown(Framebuffer::PHYSICAL_MEMORY_START), alignUp(Framebuffer::PHYSICAL_MEMORY_END), Flags::USER | Flags::WRITE);
+    identityMap(alignDown(Framebuffer::PHYSICAL_MEMORY_START), alignUp(Framebuffer::PHYSICAL_MEMORY_END));
 
     // recursive page directory mapping - map last pde to point to the page directory.
     // since pde's and pte's are in compatiable format, this allows accessing physical
@@ -28,7 +29,12 @@ void Paging::init() {
     x86::regs::cr3 = reinterpret_cast<uint32_t>(directory);
     x86::regs::cr0 |= PAGING_BIT;
 
+    physicalKernelDirectory = directory;
     directory = VIRTUAL_DIRECTORY;
+}
+
+uint32_t Paging::getKernelDirectory() {
+    return reinterpret_cast<uint32_t>(physicalKernelDirectory);
 }
 
 bool Paging::isMapped(uint32_t virtualAddress) {
@@ -216,6 +222,9 @@ void Paging::mapKernel(Task& task) {
         auto pde = parseAddress(addr).pde;
         newDirectory[pde] = directory[pde];
     }
+
+    // each task has recursive mapping too (with the last entry pointing to it's directory)
+    newDirectory[ENTRIES - 1] = Directory::Entry(reinterpret_cast<Table::Entry*>(task.cr3));
 }
 
 bool Paging::modify(Task& task, uint32_t virtualAddress, uint32_t physicalAddress, Paging::Flags flags) {

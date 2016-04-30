@@ -23,13 +23,10 @@ public:
 
     static void start(Entry* entry);
     static void tick();
-    static void reschedule();
+    static bool started();
 
     static int exec(const char* executable);
     static int current();
-
-    static void set(int pid, Task::State state);
-    static void set(Task::State state); // set current
 
     static void block(int pid);
     static void block(); // block current
@@ -37,8 +34,8 @@ public:
     static void kill(int pid);
     static void exit(); // kill current
 
-    static void wait(int pid, int child); // make pid wait for his child
-    static void wait(int child); // make current wait for child
+    static int wait(int pid, int child); // make pid wait for his child
+    static int wait(int child); // make current wait for child
 
     static void sleep(int pid, size_t ms);
     static void sleep(size_t ms); // make current sleep
@@ -48,12 +45,23 @@ public:
     static uint32_t increase(int pid, size_t pages);
     static uint32_t increase(size_t pages);
 
+    static Vector<String> getWorkingDirectory(int pid);
+    static Vector<String> getWorkingDirectory();
+
+    static void setWorkingDirectory(int pid, const Vector<String>& path);
+    static void setWorkingDirectory(const Vector<String>& path);
+
+    static size_t tty(int pid);
+
+    static bool isKernelTask(int pid);
+
 private:
-    static bool started;
+    static bool enabled;
 
     static Vector<Task> tasks;
     static int currPid;
 
+    static void reschedule();
     static int nextTask();
     static void switchTo(int newPid);
     static bool shouldWait(int pid, bool childJustKilled);
@@ -68,7 +76,7 @@ private:
     } idle, cleaner, init;
 
     static int newTask();
-    static int newKernelTask(uint8_t* kernelStack, uint8_t* userStack, Entry* entry);
+    static int newKernelTask(const char* name, uint8_t* kernelStack, uint8_t* userStack, Entry* entry);
     static int newUserTask(const char* executable);
 
     static uint32_t espAddress(uint32_t stackStart, uint32_t offset, size_t size = STACK_SIZE);

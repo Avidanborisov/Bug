@@ -26,11 +26,15 @@ public:
         free(reinterpret_cast<uint32_t>(address), pages);
     }
 
+    static size_t used();
+    static size_t available();
+
 private:
     static uint32_t kernelEnd;
     static bool initialized;
 
     static Bitset<> memory;
+    static size_t usedPages;
 };
 
 #endif // PHYSICALALLOCATOR_HPP

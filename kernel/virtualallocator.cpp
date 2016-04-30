@@ -1,49 +1,43 @@
 #include "virtualallocator.hpp"
 #include "physicalallocator.hpp"
-#include "memorymap.hpp"
+#include "kernel.hpp"
 
-uint32_t VirtualAllocator::get(size_t pages, Paging::Flags flags) {
-    Optional<uint32_t> virt;
-    if (bool(flags & Paging::Flags::USER_SPACE)) {
-        virt = Paging::findFree(pages, Paging::VIRTUAL_USERSPACE_BEGIN, Paging::VIRTUAL_USERSPACE_END);
-    } else {
-        virt = Paging::findFree(pages, 0, Paging::VIRTUAL_USERSPACE_BEGIN);
-    }
-
-    return virt ? *virt : 0;
+uint32_t VirtualAllocator::getFreeKernelPages(size_t pages) {
+    Optional<uint32_t> addr = Paging::findFree(pages, 0, Paging::VIRTUAL_USERSPACE_BEGIN);
+    return addr ? *addr : 0;
 }
 
-uint32_t VirtualAllocator::linked(size_t pages, Paging::Flags flags) {
-    return linked(pages, flags, nullptr);
+uint32_t VirtualAllocator::getMappedKernelPages(size_t pages, Paging::Flags flags) {
+    return getMappedKernelPages(pages, flags, nullptr);
 }
 
-uint32_t VirtualAllocator::linked(Task& task, size_t pages, Paging::Flags flags) {
-    return linked(pages, flags, &task);
+uint32_t VirtualAllocator::getMappedKernelPages(Task& task, size_t pages, Paging::Flags flags) {
+    return getMappedKernelPages(pages, flags, &task);
 }
 
-uint32_t VirtualAllocator::linked(size_t pages, Paging::Flags flags, Task* task) {
-    auto virt = get(pages, flags);
+uint32_t VirtualAllocator::getMappedKernelPages(size_t pages, Paging::Flags flags, Task* task) {
+    auto virt = getFreeKernelPages(pages);
     if (!virt)
         return 0;
 
-    if (link(virt, pages, task, flags)) {
+    if (createPhysicalMapping(virt, pages, task, flags)) {
         return virt;
     } else {
         return 0;
     }
 }
 
-bool VirtualAllocator::link(uint32_t virt, size_t pages, Paging::Flags flags) {
-    return link(virt, pages, nullptr, flags);
+bool VirtualAllocator::createPhysicalMapping(uint32_t virt, size_t pages, Paging::Flags flags) {
+    return createPhysicalMapping(virt, pages, nullptr, flags);
 }
 
-Vector<Task::Segment> VirtualAllocator::link(Task& task, uint32_t virt, size_t pages, Paging::Flags flags) {
+Vector<Task::Segment> VirtualAllocator::createPhysicalMapping(Task& task, uint32_t virt, size_t pages, Paging::Flags flags) {
     Vector<Task::Segment> added;
-    link(virt, pages, &task, flags, &added);
+    createPhysicalMapping(virt, pages, &task, flags, &added);
     return added;
 }
 
-bool VirtualAllocator::link(uint32_t virt, size_t pages, Task* task, Paging::Flags flags, Vector<Task::Segment>* added) {
+bool VirtualAllocator::createPhysicalMapping(uint32_t virt, size_t pages, Task* task, Paging::Flags flags, Vector<Task::Segment>* added) {
     auto map = [&](uint32_t virt, uint32_t phys, size_t pages) {
         if (task) {
             if (added) {
@@ -85,5 +79,9 @@ bool VirtualAllocator::link(uint32_t virt, size_t pages, Task* task, Paging::Fla
 }
 
 void* allocator(size_t pages) {
-    return VirtualAllocator::linked<void*>(pages);
+    auto virt = VirtualAllocator::getMappedKernelPages<void*>(pages);
+    if (!virt)
+        Kernel::panic("No free virtual pages in kernel space");
+
+    return virt;
 }

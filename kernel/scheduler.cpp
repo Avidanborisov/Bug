@@ -13,10 +13,12 @@
 #include "virtualallocator.hpp"
 #include "mappedpointer.hpp"
 #include "utility.hpp"
+#include "terminal.hpp"
+#include "sysfs.hpp"
 
 Vector<Task> Scheduler::tasks;
 int Scheduler::currPid = -1;
-bool Scheduler::started = false;
+bool Scheduler::enabled = false;
 
 Scheduler::KernelTask Scheduler::idle;
 Scheduler::KernelTask Scheduler::cleaner;
@@ -53,11 +55,16 @@ int Scheduler::newTask() {
     tasks[pid].parent = currPid;
     tasks[pid].state = Task::State::NEW;
     tasks[pid].rounds = 0;
+    tasks[pid].tty = Terminal::getActiveTTY();
+
+    if (currPid >= 0) {
+        tasks[pid].workingDirectory = tasks[currPid].workingDirectory;
+    }
 
     return pid;
 }
 
-int Scheduler::newKernelTask(uint8_t* kernelStack, uint8_t* userStack, Entry* entry) {
+int Scheduler::newKernelTask(const char* name, uint8_t* kernelStack, uint8_t* userStack, Entry* entry) {
     auto& task = tasks[newTask()];
     auto esp = espAddress(userStack, sizeof(Context::Registers));
 
@@ -68,8 +75,9 @@ int Scheduler::newKernelTask(uint8_t* kernelStack, uint8_t* userStack, Entry* en
     task.context->eip = reinterpret_cast<uint32_t>(entry);
     task.context->esp = esp;
     task.espKernel = espAddress(kernelStack, 0);
-    task.cr3 = x86::regs::cr3();
+    task.cr3 = Paging::getKernelDirectory();
 
+    task.name = name;
     task.state = Task::State::READY;
     return task.pid;
 }
@@ -82,7 +90,7 @@ int Scheduler::newUserTask(const char* executable) {
     auto& task = tasks[newTask()];
     Paging::mapKernel(task);
 
-    auto userStackSegments = VirtualAllocator::link(task, VIRTUAL_USER_STACK, STACK_PAGES, Paging::Flags::WRITE);
+    auto userStackSegments = VirtualAllocator::createPhysicalMapping(task, VIRTUAL_USER_STACK, STACK_PAGES, Paging::Flags::WRITE);
     auto last = userStackSegments.last();
 
     MappedPointer<uint8_t> userStack(last.physical, last.pages);
@@ -106,7 +114,6 @@ int Scheduler::newUserTask(const char* executable) {
     for (size_t i = 0; i < header->programHeaders(); ++i) {
         auto& programHeader = header->programHeaderTable()[i];
 
-        // if loadable segment
         if (programHeader.isLoadable()) {
             uint32_t start = programHeader.virtualAddress();
             uint32_t size  = programHeader.memorySize();
@@ -119,7 +126,7 @@ int Scheduler::newUserTask(const char* executable) {
             if (virt + bytes > task.end)
                 task.end = virt + bytes;
 
-            auto added = VirtualAllocator::link(task, virt, pages, programHeader.flags());
+            auto added = VirtualAllocator::createPhysicalMapping(task, virt, pages, programHeader.flags());
 
             auto content = programHeader.data(header);
             if (programHeader.fileSize() != programHeader.memorySize()) { // if bss, create zero'd content
@@ -143,16 +150,58 @@ int Scheduler::newUserTask(const char* executable) {
         }
     }
 
-    task.espKernel = espAddress(VirtualAllocator::linked(task, STACK_PAGES), 0);
+    task.espKernel = espAddress(VirtualAllocator::getMappedKernelPages(task, STACK_PAGES), 0);
 
+    task.name = executable;
     task.state = Task::State::READY;
     return task.pid;
 }
 
 void Scheduler::start(Entry* entry) {
-    idle.pid    = newKernelTask(idle.kernelStack, idle.userStack, KernelTask::idle);
-    cleaner.pid = newKernelTask(cleaner.kernelStack, cleaner.userStack, KernelTask::cleaner);
-    init.pid    = newKernelTask(init.kernelStack, init.userStack, entry);
+    idle.pid    = newKernelTask("idle",    idle.kernelStack, idle.userStack, KernelTask::idle);
+    cleaner.pid = newKernelTask("cleaner", cleaner.kernelStack, cleaner.userStack, KernelTask::cleaner);
+    init.pid    = newKernelTask("init",    init.kernelStack, init.userStack, entry);
+
+    Sysfs::set("/sys/tasks", []() {
+        String output;
+        for (const auto& task : tasks) {
+            if (task.state == Task::State::EMPTY)
+                continue;
+
+            output += task.name + ": " +
+                      (isKernelTask(task.pid) ? "kernel " : "user ") +
+                      "pid=" + String::fromInt(task.pid) + " " +
+                      "parent=" + String::fromInt(task.parent) + " " +
+                      "tty=" + String::fromInt(task.tty) + " ";
+
+            auto state = [](Task::State ts) {
+                switch (ts) {
+                    case Task::State::EMPTY:    return "EMPTY";
+                    case Task::State::NEW:      return "NEW";
+                    case Task::State::READY:    return "READY";
+                    case Task::State::RUNNING:  return "RUNNING";
+                    case Task::State::BLOCKED:  return "BLOCKED";
+                    case Task::State::SLEEPING: return "SLEEPING";
+                    case Task::State::WAITING:  return "WAITING";
+                    case Task::State::KILLED:   return "WAITING";
+                }
+
+                return "UNKNOWN";
+            };
+
+            output += "state="_s + state(task.state);
+
+            String path = "/";
+
+            for (auto& part : task.workingDirectory) {
+                path += part + "/";
+            }
+
+            output += " wd="_s + path;
+            output += "\n";
+        }
+        return output;
+    });
 
     currPid = idle.pid;
     tasks[currPid].state = Task::State::RUNNING;
@@ -160,7 +209,7 @@ void Scheduler::start(Entry* entry) {
 }
 
 void Scheduler::tick() {
-    if (!started)
+    if (!enabled)
         return;
 
     static auto ticks = 0;
@@ -184,6 +233,10 @@ void Scheduler::tick() {
     currTask.rounds = 0;
     currTask.state = Task::State::READY;
     reschedule();
+}
+
+bool Scheduler::started() {
+    return enabled;
 }
 
 void Scheduler::reschedule() {
@@ -228,19 +281,14 @@ int Scheduler::current() {
     return currPid;
 }
 
-void Scheduler::set(int pid, Task::State state) {
-    assert(pid > 0 && size_t(pid) < tasks.size());
-    tasks[pid].state = state;
-}
-
 void Scheduler::block(int pid) {
-    assert(pid > 0 && size_t(pid) < tasks.size());
+    assert(pid >= 0 && size_t(pid) < tasks.size());
     tasks[pid].state = Task::State::BLOCKED;
     reschedule();
 }
 
 void Scheduler::sleep(int pid, size_t ms) {
-    assert(pid > 0 && size_t(pid) < tasks.size());
+    assert(pid >= 0 && size_t(pid) < tasks.size());
 
     tasks[pid].state = Task::State::SLEEPING;
     tasks[pid].timeout = ms;
@@ -254,8 +302,8 @@ bool Scheduler::shouldWait(int pid, bool childJustKilled) {
     if (task.waitingFor > 0)
         return tasks[task.waitingFor].state != Task::State::KILLED;
 
-    if (task.waitingFor == CHILD_ANY && childJustKilled)
-        return false;
+    if (task.waitingFor == CHILD_ANY)
+        return !childJustKilled;
 
     if (task.waitingFor == CHILD_ALL) {
         for (const Task& child : tasks) {
@@ -270,16 +318,18 @@ bool Scheduler::shouldWait(int pid, bool childJustKilled) {
 }
 
 void Scheduler::kill(int pid) {
-    assert(pid > 0 && size_t(pid) < tasks.size());
+    assert(pid >= 0 && size_t(pid) < tasks.size());
     auto parent = tasks[pid].parent;
 
     tasks[pid].state = Task::State::KILLED;
 
     // unblock parent
-    for (const Task& task : tasks) {
+    for (Task& task : tasks) {
         if (task.pid == parent && task.state == Task::State::WAITING) {
-            if (!shouldWait(task.pid, true))
+            if (!shouldWait(task.pid, true)) {
+                task.waitingFor = pid;
                 unblock(task.pid);
+            }
         }
     }
 
@@ -287,20 +337,22 @@ void Scheduler::kill(int pid) {
     reschedule();
 }
 
-void Scheduler::wait(int pid, int child) {
-    assert(pid > 0 && size_t(pid) < tasks.size());
+int Scheduler::wait(int pid, int child) {
+    assert(pid >= 0 && size_t(pid) < tasks.size());
 
     tasks[pid].waitingFor = child;
 
     if (!shouldWait(pid, false))
-        return;
+        return CHILD_ANY;
 
     tasks[pid].state = Task::State::WAITING;
     reschedule();
+
+    return tasks[pid].waitingFor;
 }
 
 void Scheduler::unblock(int pid) {
-    assert(pid > 0 && size_t(pid) < tasks.size());
+    assert(pid >= 0 && size_t(pid) < tasks.size());
 
     if (tasks[pid].state != Task::State::BLOCKED && tasks[pid].state != Task::State::WAITING)
         return;
@@ -309,20 +361,30 @@ void Scheduler::unblock(int pid) {
 }
 
 uint32_t Scheduler::increase(int pid, size_t pages) {
-    assert(pid > 0 && size_t(pid) < tasks.size());
+    assert(pid >= 0 && size_t(pid) < tasks.size());
     auto& task = tasks[pid];
 
-    if (VirtualAllocator::link(task, task.end, pages, Paging::Flags::WRITE).size() > 0) {
+    if (VirtualAllocator::createPhysicalMapping(task, task.end, pages, Paging::Flags::WRITE).size() > 0) {
         auto addr = task.end;
         task.end += pages * Paging::PAGE_SIZE;
         return addr;
     }
 
-    return task.end;
+    return 0;
 }
 
-void Scheduler::set(Task::State state) {
-    set(currPid, state);
+size_t Scheduler::tty(int pid) {
+    assert(pid >= 0 && size_t(pid) < tasks.size());
+    auto& task = tasks[pid];
+
+    return task.tty;
+}
+
+bool Scheduler::isKernelTask(int pid) {
+    assert(pid >= 0 && size_t(pid) < tasks.size());
+    auto& task = tasks[pid];
+
+    return task.cr3 == Paging::getKernelDirectory();
 }
 
 void Scheduler::block() {
@@ -337,16 +399,34 @@ void Scheduler::exit() {
     kill(currPid);
 }
 
-void Scheduler::wait(int child) {
-    wait(currPid, child);
+int Scheduler::wait(int child) {
+    return wait(currPid, child);
 }
 
 uint32_t Scheduler::increase(size_t pages) {
     return increase(currPid, pages);
 }
 
+Vector<String> Scheduler::getWorkingDirectory(int pid) {
+    assert(pid >= 0 && size_t(pid) < tasks.size());
+    return tasks[pid].workingDirectory;
+}
+
+Vector<String> Scheduler::getWorkingDirectory() {
+    return getWorkingDirectory(currPid);
+}
+
+void Scheduler::setWorkingDirectory(int pid, const Vector<String>& path) {
+    assert(pid >= 0 && size_t(pid) < tasks.size());
+    tasks[pid].workingDirectory = path;
+}
+
+void Scheduler::setWorkingDirectory(const Vector<String>& path) {
+    return setWorkingDirectory(currPid, path);
+}
+
 void Scheduler::KernelTask::idle() {
-    started = true;
+    enabled = true;
     Timer::start(FREQUENCY);
 
     while (true) {
@@ -368,7 +448,8 @@ void Scheduler::KernelTask::cleaner() {
                 PhysicalAllocator::free(segment.physical, segment.pages);
             }
 
-            PhysicalAllocator::free(task.cr3, 1);
+            if (task.cr3 != Paging::getKernelDirectory())
+                PhysicalAllocator::free(task.cr3, 1);
 
             task.state = Task::State::EMPTY;
             task.segments.clear();

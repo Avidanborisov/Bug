@@ -3,10 +3,12 @@
 #include "paging.hpp"
 #include "memorymap.hpp"
 #include "kernel.hpp"
+#include "sysfs.hpp"
 
 extern uint32_t kernelEnd;
 uint32_t PhysicalAllocator::kernelEnd = Paging::alignUp(&::kernelEnd);
 bool PhysicalAllocator::initialized = false;
+size_t PhysicalAllocator::usedPages = 0;
 
 Bitset<> PhysicalAllocator::memory;
 
@@ -35,6 +37,7 @@ void PhysicalAllocator::init() {
 
     memory.set(0, kernelEnd / Paging::PAGE_SIZE);
     initialized = true;
+    usedPages = kernelEnd / Paging::PAGE_SIZE;
 }
 
 uint32_t PhysicalAllocator::allocate(size_t pages) {
@@ -46,10 +49,20 @@ uint32_t PhysicalAllocator::allocate(size_t pages) {
         return 0;
     }
 
+    usedPages += pages;
     memory.set(*page, pages);
     return *page * Paging::PAGE_SIZE;
 }
 
 void PhysicalAllocator::free(uint32_t address, size_t pages) {
     memory.clear(address / Paging::PAGE_SIZE, pages);
+    usedPages -= pages;
+}
+
+size_t PhysicalAllocator::used() {
+    return usedPages * Paging::PAGE_SIZE;
+}
+
+size_t PhysicalAllocator::available() {
+    return memory.size() * Paging::PAGE_SIZE;
 }

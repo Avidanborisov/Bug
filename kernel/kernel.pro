@@ -49,7 +49,11 @@ SOURCES += \
     task.S \
     programs.cpp \
     syscalls.cpp \
-    terminal.cpp
+    terminal.cpp \
+    keyboard.cpp \
+    filesystem.cpp \
+    sysfs.cpp \
+    rtc.cpp
 
 HEADERS += \
     boot/bios.hpp \
@@ -77,7 +81,13 @@ HEADERS += \
     task.h \
     syscalls.hpp \
     mappedpointer.hpp \
-    terminal.hpp
+    terminal.hpp \
+    keyboard.hpp \
+    semaphore.hpp \
+    waitqueue.hpp \
+    filesystem.hpp \
+    sysfs.hpp \
+    rtc.hpp
 
 # Global constructors support
 #

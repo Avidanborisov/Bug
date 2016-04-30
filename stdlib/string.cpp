@@ -330,3 +330,25 @@ int String::compare(const char* s1, const char* s2, size_t length) {
 int String::compare(const char* s1, const char* s2) {
     return compare(s1, s2, Util::min(length(s1), length(s2)));
 }
+
+Vector<String> String::split(char sep) const {
+    Vector<String> parts;
+    String current;
+
+    for (char c : *this) {
+        if (c == sep) {
+            if (!current.empty()) {
+                parts.add(current);
+                current.clear();
+            }
+        } else {
+            current += c;
+        }
+    }
+
+    if (!current.empty()) {
+        parts.add(current);
+    }
+
+    return parts;
+}

@@ -11,7 +11,8 @@ SOURCES += \
     memops.cpp \
     cxxabi.cpp \
     heap.cpp \
-    console.cpp
+    console.cpp \
+    file.cpp
 
 HEADERS += \
     vector.hpp \
@@ -27,4 +28,9 @@ HEADERS += \
     cxxabi.hpp \
     math.hpp \
     heap.hpp \
-    console.hpp
+    console.hpp \
+    spinlock.hpp \
+    lockguard.hpp \
+    queue.hpp \
+    file.hpp \
+    datetime.hpp

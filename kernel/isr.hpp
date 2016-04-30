@@ -16,6 +16,8 @@ public:
 private:
     static void commonHandler(Context::Registers& regs) asm("ISR_commonHandler");
     static Handler* handlers[];
+
+    static const char* exceptions[];
 };
 
 #endif // ISR_HPP

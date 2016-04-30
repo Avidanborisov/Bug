@@ -22,6 +22,7 @@ void Terminal::clear() {
 void Terminal::putchar(char c, Console::Color fg, Console::Color bg) {
     if (c == '\b' && cursor.x != 0) {
         --cursor.x;
+        monitor()[cursor.y][cursor.x] = Framebuffer::BLANK;
     } else if (c == '\t') {
         cursor.x = (cursor.x / 8 + 1) * 8;
     } else if (c == '\r') {
@@ -48,6 +49,67 @@ void Terminal::print(const char* s, Console::Color fg, Console::Color bg) {
         putchar(*s++, fg, bg);
 }
 
+void Terminal::sendInput(char key) {
+    int entered = 0;
+
+    for (char c : input) {
+        if (c == '\b')
+            --entered;
+        else
+            ++entered;
+    }
+
+    if (key == '\b') {
+        if (entered > 0) {
+            Console::print(key);
+            input.insert(0, { key });
+        }
+
+        return;
+    }
+
+    input.insert(0, { key });
+    Console::print(key);
+    inputWaiters.wake();
+}
+
+size_t Terminal::read(char* buffer, size_t max) {
+    while (true) {
+        int entered = 0;
+        char last = 0;
+
+        if (!input.empty()) {
+            last = input.first();
+            for (char c : input) {
+                if (c == '\b')
+                    --entered;
+                else
+                    ++entered;
+            }
+        }
+
+        if (entered > 0 && (last == '\n' || size_t(entered) == max)) {
+            size_t pos = 0;
+
+            while (!input.empty()) {
+                char c = input.last();
+                input.pop();
+
+                if (c == '\b') {
+                    if (pos > 0)
+                        --pos;
+                } else {
+                    buffer[pos++] = c;
+                }
+            }
+
+            return pos;
+        }
+
+        inputWaiters.wait();
+    }
+}
+
 void Terminal::scroll() {
     if (cursor.y < Framebuffer::HEIGHT)
         return;
@@ -69,7 +131,10 @@ size_t Terminal::id() const {
     return this - terminals;
 }
 
-void Terminal::setActive(int tty) {
+void Terminal::setActive(size_t tty) {
+    if (active == tty)
+        return;
+
     Terminal& currActive = terminals[active];
     Terminal& newActive  = terminals[tty];
 
@@ -80,8 +145,12 @@ void Terminal::setActive(int tty) {
     newActive.updateCursor();
 }
 
-int Terminal::getActive() {
+size_t Terminal::getActiveTTY() {
     return active;
+}
+
+Terminal& Terminal::getActive() {
+    return terminals[active];
 }
 
 Terminal& Terminal::get(int tty) {
@@ -107,13 +176,17 @@ void Terminal::updateCursor() {
 }
 
 void clear() {
-    Terminal::get(Terminal::getActive()).clear();
+    Terminal::getActive().clear();
 }
 
 void putchar(char c, Console::Color fg, Console::Color bg) {
-    Terminal::get(Terminal::getActive()).putchar(c, fg, bg);
+    Terminal::getActive().putchar(c, fg, bg);
 }
 
 void print(const char* s, Console::Color fg, Console::Color bg) {
-    Terminal::get(Terminal::getActive()).print(s, fg, bg);
+    Terminal::getActive().print(s, fg, bg);
+}
+
+size_t input(char* buffer, size_t max) {
+    return Terminal::getActive().read(buffer, max);
 }

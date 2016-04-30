@@ -8,36 +8,32 @@
 
 class VirtualAllocator {
 public:
-    static uint32_t get(size_t pages, Paging::Flags flags = Paging::Flags::NONE);
-    static uint32_t linked(size_t pages, Paging::Flags flags = Paging::Flags::NONE);
-    static uint32_t linked(Task& task, size_t pages, Paging::Flags flags = Paging::Flags::NONE);
-    static bool link(uint32_t virt, size_t pages, Paging::Flags flags = Paging::Flags::NONE);
-    static Vector<Task::Segment> link(Task& task, uint32_t virt, size_t pages, Paging::Flags flags = Paging::Flags::NONE);
-    static bool free(uint32_t address, size_t pages);
+    static uint32_t getFreeKernelPages(size_t pages);
+
+    static uint32_t getMappedKernelPages(size_t pages, Paging::Flags flags = Paging::Flags::NONE);
+    static uint32_t getMappedKernelPages(Task& task, size_t pages, Paging::Flags flags = Paging::Flags::NONE);
+
+    static bool                  createPhysicalMapping(uint32_t virt, size_t pages, Paging::Flags flags = Paging::Flags::NONE);
+    static Vector<Task::Segment> createPhysicalMapping(Task& task, uint32_t virt, size_t pages, Paging::Flags flags = Paging::Flags::NONE);
 
     template<class T>
-    static T get(size_t pages, Paging::Flags flags = Paging::Flags::NONE) {
-        return reinterpret_cast<T>(get(pages, flags));
+    static T getFreeKernelPages(size_t pages) {
+        return reinterpret_cast<T>(getFreeKernelPages(pages));
     }
 
     template<class T>
-    static T linked(size_t pages, Paging::Flags flags = Paging::Flags::NONE) {
-        return reinterpret_cast<T>(linked(pages, flags));
+    static T getMappedKernelPages(size_t pages, Paging::Flags flags = Paging::Flags::NONE) {
+        return reinterpret_cast<T>(getMappedKernelPages(pages, flags));
     }
 
     template<class T>
-    static T linked(Task& task, size_t pages, Paging::Flags flags = Paging::Flags::NONE) {
-        return reinterpret_cast<T>(linked(task, pages, flags));
-    }
-
-    template<class T>
-    static bool free(T* address, size_t pages) {
-        return free(reinterpret_cast<uint32_t>(address), pages);
+    static T getMappedKernelPages(Task& task, size_t pages, Paging::Flags flags = Paging::Flags::NONE) {
+        return reinterpret_cast<T>(getMappedKernelPages(task, pages, flags));
     }
 
 private:
-    static uint32_t linked(size_t pages, Paging::Flags flags, Task* task);
-    static bool link(uint32_t virt, size_t pages, Task* task, Paging::Flags flags, Vector<Task::Segment>* out = nullptr);
+    static uint32_t getMappedKernelPages(size_t pages, Paging::Flags flags, Task* task);
+    static bool createPhysicalMapping(uint32_t virt, size_t pages, Task* task, Paging::Flags flags, Vector<Task::Segment>* out = nullptr);
 };
 
 #endif // VIRTUALALLOCATOR_HPP

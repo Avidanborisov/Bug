@@ -19,7 +19,7 @@ public:
     template<class U>
     MappedPointer(U phys, size_t pages = 1, Paging::Flags flags = Paging::Flags::NONE) :
         pages(pages) {
-        virt = VirtualAllocator::get<T*>(pages);
+        virt = VirtualAllocator::getFreeKernelPages<T*>(pages);
         if (!virt) {
             virt = nullptr;
             return;

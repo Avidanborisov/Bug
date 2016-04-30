@@ -16,6 +16,18 @@ void print(const char* s, Console::Color fg, Console::Color bg) {
     return System::print(s, fg, bg);
 }
 
+size_t input(char* buffer, size_t max) {
+    return System::input(buffer, max);
+}
+
+int read(const char* file, char* buffer, size_t count, size_t offset = 0) {
+    return System::read(file, buffer, count, offset);
+}
+
+int write(const char* file, const char* buffer, size_t count, size_t offset = 0) {
+    return System::write(file, buffer, count, offset);
+}
+
 extern void main();
 
 extern "C" void abort(const char* msg, ...) {

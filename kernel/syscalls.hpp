@@ -22,6 +22,7 @@ private:
     static void increase(Context::Registers& regs);
     static void exit(Context::Registers& regs);
     static void pid(Context::Registers& regs);
+    static void tty(Context::Registers& regs);
     static void input(Context::Registers& regs);
     static void read(Context::Registers& regs);
     static void write(Context::Registers& regs);

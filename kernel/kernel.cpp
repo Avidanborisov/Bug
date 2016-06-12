@@ -19,7 +19,7 @@
 #include "sysfs.hpp"
 #include "file.hpp"
 
-void Kernel::main() {
+void Kernel::main() {   
     Timer::disable();
 
     Console::clear();

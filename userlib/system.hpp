@@ -15,10 +15,11 @@ public:
     static void clear();
 
     static void sleep(size_t ms);
-    static int exec(const char* executable);
+    static int exec(const char* executable, int tty = -1);
     static int wait(int child);
     static void exit();
     static int pid();
+    static int tty();
 
     static void* increase(size_t pages);
 
@@ -30,6 +31,8 @@ public:
     static void swd(const String& workingDirectory);
 
     static DateTime date();
+    static uint32_t random();
+    static uint32_t random(uint32_t min, uint32_t max);
 
     static bool kill(int pid);
 

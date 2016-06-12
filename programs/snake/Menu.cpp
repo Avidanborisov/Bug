@@ -21,12 +21,12 @@ Choice menu(SnakeData* Snake)
 {
 	const char* logo[] =
 	{
-		"          _______..__   __.      ___       __  ___  _______       ",
-		"         /       ||  \\ |  |     /   \\     |  |/  / |   ____|      ",
-		"        |   (----`|   \\|  |    /  ^  \\    |  '  /  |  |__         ",
-		"         \\   \\    |  . `  |   /  /_\\  \\   |    <   |   __|        ",
-		"     .----)   |   |  |\\   |  /  _____  \\  |  .  \\  |  |____       ",
-        "     |_______/    |__| \\__| /__/     \\__\\ |__|\\__\\ |_______|      ",
+        "          _______..__   __.      ___       __  ___  _______             ",
+        "         /       ||  \\ |  |     /   \\     |  |/  / |   ____|          ",
+        "        |   (----`|   \\|  |    /  ^  \\    |  '  /  |  |__             ",
+        "         \\   \\    |  . `  |   /  /_\\  \\   |    <   |   __|          ",
+        "     .----)   |   |  |\\   |  /  _____  \\  |  .  \\  |  |____          ",
+        "     |_______/    |__| \\__| /__/     \\__\\ |__|\\__\\ |_______|       ",
         "                                                                        ",
         "                                                                        ",
         "                                                                        "
@@ -39,6 +39,8 @@ Choice menu(SnakeData* Snake)
 		"INSTRUCTIONS",
 		"QUIT",
 	};
+
+    Color colors[] = { Console::Color::GREEN, Console::Color::CYAN, Console::Color::BLUE, Console::Color::BROWN };
 
 	int key, j, i = 0, xPosition = CENTER_POS(Snake, *logo); /* center of the screen */
 	Choice choice = 0;
@@ -55,8 +57,7 @@ Choice menu(SnakeData* Snake)
 	}
 
 	xPosition = CENTER_POS(Snake, *menuText);
-    Color color = Console::Color::BROWN;
-//	setColor(GREEN);
+    Color color = colors[0];
 
 	for (j = 0; j < ARRAY_SIZE(menuText); j++) /* print the menu options */
 	{
@@ -83,7 +84,7 @@ Choice menu(SnakeData* Snake)
 		}
 
 		/* Select new menu choice */
-        color = Console::Color::BROWN;
+        color = colors[choice];
         setPosition(xPosition, i + choice + 2);
         Console::printf(color, menuText[choice], Snake->speed);
 	}
@@ -124,7 +125,7 @@ void speed(SnakeData* Snake)
 					&& (Snake->speed + change <= MAX_SPEED)) /* change speed only if it isn't beyond limits */
 			{
 				Snake->speed += change; /* change speed */
-                Console::printf("\b\b%2d", Snake->speed); /* print new speed */
+                Console::printf(Console::Color::CYAN, "\b\b%.2d", Snake->speed); /* print new speed */
 			}
 		}
 	}
@@ -135,9 +136,6 @@ void instructions(SnakeData* Snake)
 	const char* text[] =
 	{
         "Welcome to Bug Snake!\n", "\n",
-//		"_MENU_\n",
-//        "Use 'w' and 's' to navigate up and down, respectively.\n",
-//        "Press ENTER to select the choice, or to get back to the menu.\n", "\n",
 		"_GAMEPLAY_\n",
 		"The purpose of this game is to move the snake, trying to eat\n",
 		"food, and thus achieving more score.\n", "\n",
@@ -157,7 +155,7 @@ void instructions(SnakeData* Snake)
 	bool printFood = false;
 
 	clearScreen();
-//	setColor(GREEN);
+    Color color = Console::Color::LIGHT_GREEN;
 
 	if (biggestString(text, ARRAY_SIZE(text)) <= Snake->range.x
 		&& ARRAY_SIZE(text) <= Snake->range.y) /* only if there is enough place to display
@@ -165,13 +163,11 @@ void instructions(SnakeData* Snake)
 	{
 		for (i = 0; i < ARRAY_SIZE(text); i++)
 		{
-            Color color;
             if (printFood) /* if we need to show food examples, we show them. */
 			{
 				printFood = false;
 				printPixel(example);
 				example = SPECIAL_FOOD; /* second food example is special food */
-//				setColor(CYAN);
                 Console::print('.', Console::Color::CYAN);
 			}
 			else if (*text[i] == '_') /* if 'title' */
@@ -221,7 +217,6 @@ void gameOver(SnakeData* Snake)
 	int i, xPosition = CENTER_POS(Snake, *logo); /* center of the screen */
 
 	clearScreen();
-//	setColor(CYAN);
 
 	if (xPosition > 0 && (Snake->range.y + 1) > ARRAY_SIZE(logo) + 1) /* only if there is enough space */
 	{
@@ -235,13 +230,11 @@ void gameOver(SnakeData* Snake)
 	/* Print the score */
 	xPosition = CENTER_POS(Snake, format[0]);
 	setPosition(xPosition, i + 2);
-//	setColor(RED);
     Console::printf(format[0], Snake->score, Console::Color::LIGHT_RED);
 
 	/* Press any key to continue... */
 	xPosition = CENTER_POS(Snake, format[1]);
 	setPosition(xPosition, i + 3);
-//	setColor(DARK_RED);
     Console::print(format[1], Console::Color::RED);
 
 	/* Clear possible input from the snake, and wait a bit */

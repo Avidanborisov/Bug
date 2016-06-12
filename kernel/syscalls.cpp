@@ -16,6 +16,7 @@ ISR::Handler* Syscalls::handlers[] = {
     Syscalls::increase,
     Syscalls::exit,
     Syscalls::pid,
+    Syscalls::tty,
     Syscalls::input,
     Syscalls::read,
     Syscalls::write,
@@ -67,7 +68,9 @@ void Syscalls::sleep(Context::Registers& regs) {
 
 void Syscalls::exec(Context::Registers& regs) {
     auto executable = reinterpret_cast<const char*>(regs.ebx);
-    regs.eax = Scheduler::exec(executable);
+    auto tty        = static_cast<int>(regs.ecx);
+
+    regs.eax = Scheduler::exec(executable, tty);
 }
 
 void Syscalls::wait(Context::Registers& regs) {
@@ -86,6 +89,10 @@ void Syscalls::exit(Context::Registers&) {
 
 void Syscalls::pid(Context::Registers& regs) {
     regs.eax = Scheduler::current();
+}
+
+void Syscalls::tty(Context::Registers& regs) {
+    regs.eax = Scheduler::tty(Scheduler::current());
 }
 
 void Syscalls::input(Context::Registers& regs) {

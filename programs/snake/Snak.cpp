@@ -269,25 +269,9 @@ void checkFood(SnakeData* Snake)
 	setPixel(Snake->food, Snake->specialFood ? SPECIAL_FOOD : REGULAR_FOOD); /* display the food */
 }
 
-static unsigned long int next = 1;
-
-int rand(void) // RAND_MAX assumed to be 32767
-{
-    next = next * 1103515245 + 12345;
-    return (unsigned int)(next/65536) % 32768;
-}
-
 short randRange(short lowest, short highest)
 {
-	static bool randomize = true;
-
-	if (randomize)
-	{
-//		srand(time(NULL));
-		randomize = false;
-	}
-
-	return (rand() % (highest - lowest + 1) + lowest);
+    return System::random(lowest, highest);
 }
 
 void wait(int speed)

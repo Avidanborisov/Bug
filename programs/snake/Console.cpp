@@ -63,7 +63,6 @@ void resetConsole(void)
 {
     changeBufferingState(false);
     cursorBlinking(false);
-//    setColor(RESET_COLOR);
     clearScreen();
 }
 
@@ -77,7 +76,7 @@ void printPixel(PixelType type)
 	{
         { '#', Console::Color::WHITE },			/* WALL			*/
         { '0', Console::Color::YELLOW },		/* SNAKE_HEAD	*/
-        { 'O', Console::Color::BROWN },	/* SNAKE_BODY	*/
+        { 'O', Console::Color::BROWN },	        /* SNAKE_BODY	*/
         { '+', Console::Color::RED },			/* REGULAR_FOOD	*/
         { '$', Console::Color::GREEN }			/* SPECIAL_FOOD	*/
 	};

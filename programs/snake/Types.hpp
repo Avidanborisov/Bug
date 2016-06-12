@@ -24,10 +24,10 @@ typedef enum PixelType
 
 typedef enum Direction
 {
-	LEFT = 'a',
-	RIGHT = 'd',
-	UP = 'w',
-	DOWN = 's',
+    LEFT = Console::LEFT_KEY,
+    RIGHT = Console::RIGHT_KEY,
+    UP = Console::UP_KEY,
+    DOWN = Console::DOWN_KEY,
 } Direction;
 
 typedef struct Coord

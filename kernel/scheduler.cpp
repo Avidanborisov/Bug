@@ -273,8 +273,17 @@ void Scheduler::switchTo(int newPid) {
     Task::replace(oldPid, currPid);
 }
 
-int Scheduler::exec(const char* executable) {
-    return newUserTask(executable);
+int Scheduler::exec(const char* executable, int tty) {
+    auto curr = Terminal::getActiveTTY();
+
+    if (tty != -1) {
+        Terminal::setActive(tty);
+    }
+
+    int pid = newUserTask(executable);
+
+    Terminal::setActive(curr);
+    return pid;
 }
 
 int Scheduler::current() {
@@ -453,6 +462,9 @@ void Scheduler::KernelTask::cleaner() {
 
             task.state = Task::State::EMPTY;
             task.segments.clear();
+
+            auto& terminal = Terminal::get(task.tty);
+            terminal.clear();
         }
     }
 }

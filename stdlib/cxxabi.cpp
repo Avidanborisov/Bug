@@ -42,4 +42,14 @@ void __cxa_pure_virtual() {
     assert("Called pure virtual function" && false);
 }
 
+int __cxa_guard_acquire (__guard *g) {
+    return !*(char *)(g);
+}
+
+void __cxa_guard_release (__guard *g) {
+    *(char *)g = 1;
+}
+
+void __cxa_guard_abort (__guard *) { }
+
 }

@@ -25,7 +25,7 @@ public:
     static void tick();
     static bool started();
 
-    static int exec(const char* executable);
+    static int exec(const char* executable, int tty = -1);
     static int current();
 
     static void block(int pid);

@@ -80,15 +80,15 @@ const char Keyboard::ASCII_MAP[Keyboard::SCAN_CODES] = {
     0   , // Num lock
     0   , // Scroll Lock
     0   , // Home key
-    0   , // Up Arrow
+    23  , // Up Arrow
     0   , // Page Up
     '-' ,
-    0   , // Left Arrow
+    24  , // Left Arrow
     0   ,
-    0   , // Right Arrow
+    26  , // Right Arrow
     '+' ,
     0   , // End key
-    0   , // Down Arrow
+    25  , // Down Arrow
     0   , // Page Down
     0   , // Insert Key
     0   , // Delete Key
@@ -173,15 +173,15 @@ const char Keyboard::SHIFTED_ASCII_MAP[Keyboard::SCAN_CODES] = {
     0   , // Num lock
     0   , // Scroll Lock
     0   , // Home key
-    0   , // Up Arrow
+    23  , // Up Arrow
     0   , // Page Up
     '-' ,
-    0   , // Left Arrow
+    24  , // Left Arrow
     0   ,
-    0   , // Right Arrow
+    26  , // Right Arrow
     '+' ,
     0   , // End key
-    0   , // Down Arrow
+    25  , // Down Arrow
     0   , // Page Down
     0   , // Insert Key
     0   , // Delete Key

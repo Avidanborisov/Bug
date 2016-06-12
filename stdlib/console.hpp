@@ -77,6 +77,11 @@ public:
     static void setPosition(int x, int y);
     static void dontPrint(bool status);
 
+    static constexpr char UP_KEY    = 23;
+    static constexpr char LEFT_KEY  = 24;
+    static constexpr char DOWN_KEY  = 25;
+    static constexpr char RIGHT_KEY = 26;
+
 private:
     static void printfImpl(const char* fmt, ...);
     static void printfImpl(Color fg, const char* fmt, ...);

@@ -122,7 +122,7 @@ public:
         return fromInt(static_cast<int32_t>(num), base);
     }
 
-    int toInt(int base = 10) {
+    int toInt(int base = 10) const {
         String charmap("0123456789abcdefghijklmnopqrstuvwxyz");
 
         int num = 0;
